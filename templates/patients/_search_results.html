@@ -1,0 +1,24 @@
+{% if term and not patients %}
+    <div class="alert alert-warning d-flex justify-content-between align-items-center mb-0">
+        <span>No patient matches “{{ term }}”.</span>
+        <a href="{% url 'patient_create' %}?q={{ term|urlencode }}" class="btn btn-primary btn-sm">
+            Register as new patient
+        </a>
+    </div>
+{% elif patients %}
+    <div class="list-group">
+        {% for patient in patients %}
+            <a href="{% url 'patient_detail' patient.pk %}" class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between">
+                    <strong>{{ patient.full_name }}</strong>
+                    <span class="text-muted small">{{ patient.mrn }}</span>
+                </div>
+                <div class="text-muted small">
+                    {{ patient.get_sex_display }} · {{ patient.age }} yrs
+                    {% if patient.phone_number %}· {{ patient.phone_number }}{% endif %}
+                    {% if patient.residence %}· {{ patient.residence }}{% endif %}
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+{% endif %}

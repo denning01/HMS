@@ -5,43 +5,44 @@ from django.shortcuts import render
 
 from .models import Role
 
-# What each role sees on its dashboard. The modules are placeholders until the
-# corresponding phase is built; the labels come from the specification's matrix.
+# What each role sees on its dashboard, as (label, description, url_name).
+# A url_name of None means that screen is not built yet; the labels come from
+# the specification's permissions matrix.
 DASHBOARD_MODULES = {
     Role.ADMINISTRATOR: [
-        ("Users & roles", "Create staff accounts and assign roles"),
-        ("Price lists", "Consultation, test, drug and procedure pricing"),
-        ("Reports", "Revenue and profit across every department"),
+        ("Users & roles", "Create staff accounts and assign roles", None),
+        ("Price lists", "Consultation, test, drug and procedure pricing", None),
+        ("Reports", "Revenue and profit across every department", None),
     ],
     Role.RECEPTIONIST: [
-        ("Registration", "Find or register a patient and start a visit"),
-        ("Appointments", "Book, confirm and track upcoming visits"),
+        ("Registration", "Find or register a patient and start a visit", "registration_home"),
+        ("Appointments", "Book, confirm and track upcoming visits", None),
     ],
     Role.TRIAGE_NURSE: [
-        ("Triage queue", "Patients waiting for vitals"),
+        ("Triage queue", "Patients waiting for vitals", None),
     ],
     Role.DOCTOR: [
-        ("Consultation queue", "Patients ready to be seen"),
-        ("Results", "Lab results returned for review"),
+        ("Consultation queue", "Patients ready to be seen", None),
+        ("Results", "Lab results returned for review", None),
     ],
     Role.LAB_TECHNICIAN: [
-        ("Lab worklist", "Paid test orders awaiting processing"),
-        ("Test catalogue", "Available tests and sample types"),
+        ("Lab worklist", "Paid test orders awaiting processing", None),
+        ("Test catalogue", "Available tests and sample types", None),
     ],
     Role.PHARMACIST: [
-        ("Dispensing queue", "Paid prescriptions awaiting dispensing"),
-        ("Stock", "Stock in, write-offs, low-stock and expiry alerts"),
+        ("Dispensing queue", "Paid prescriptions awaiting dispensing", None),
+        ("Stock", "Stock in, write-offs, low-stock and expiry alerts", None),
     ],
     Role.PROCEDURE_NURSE: [
-        ("Procedure queue", "Paid procedure orders awaiting action"),
+        ("Procedure queue", "Paid procedure orders awaiting action", None),
     ],
     Role.CASHIER: [
-        ("Point of sale", "Take payment and issue receipts"),
-        ("Today's invoices", "Outstanding balances and daily total"),
+        ("Point of sale", "Take payment and issue receipts", None),
+        ("Today's invoices", "Outstanding balances and daily total", None),
     ],
     Role.FINANCE_MANAGER: [
-        ("Revenue", "Collections by date, department and cashier"),
-        ("Profit per day", "Revenue against recorded costs"),
+        ("Revenue", "Collections by date, department and cashier", None),
+        ("Profit per day", "Revenue against recorded costs", None),
     ],
 }
 
