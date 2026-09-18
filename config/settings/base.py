@@ -45,6 +45,7 @@ THIRD_PARTY_APPS = [
 # Project apps are added here as each module of the HMS is built.
 LOCAL_APPS = [
     "apps.accounts",
+    "apps.patients",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
