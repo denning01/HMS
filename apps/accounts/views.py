@@ -19,7 +19,7 @@ DASHBOARD_MODULES = {
         ("Appointments", "Book, confirm and track upcoming visits", None),
     ],
     Role.TRIAGE_NURSE: [
-        ("Triage queue", "Patients waiting for vitals", None),
+        ("Triage queue", "Patients waiting for vitals", "triage_queue"),
     ],
     Role.DOCTOR: [
         ("Consultation queue", "Patients ready to be seen", None),

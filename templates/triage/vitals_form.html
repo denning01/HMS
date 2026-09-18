@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Vitals — {{ visit.patient.full_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <h1 class="h4 mb-1">Vitals — {{ visit.patient.full_name }}</h1>
+    <p class="text-muted mb-0">
+        {{ visit.patient.mrn }} · {{ visit.patient.get_sex_display }} · {{ visit.patient.age }} yrs
+    </p>
+</div>
+
+<form method="post" novalidate
+      x-data="{
+          weight: '',
+          height: '',
+          get bmi() {
+              const w = parseFloat(this.weight), h = parseFloat(this.height);
+              if (!w || !h) return null;
+              return (w / (h * h)).toFixed(1);
+          }
+      }">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white">Readings</div>
+        <div class="card-body row g-3">
+            {% for field in form %}
+                {% if field.name != "presenting_complaint" %}
+                    <div class="col-md-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {% if field.name == "weight" %}
+                            {{ field }}
+                        {% elif field.name == "height" %}
+                            {{ field }}
+                        {% else %}
+                            {{ field }}
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <div class="col-md-3">
+                <label class="form-label">BMI</label>
+                <div class="form-control-plaintext fw-bold" x-text="bmi ?? '—'"></div>
+                <div class="form-text">Calculated from weight and height.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white">Presenting complaint</div>
+        <div class="card-body">
+            {{ form.presenting_complaint }}
+            <div class="form-text">{{ form.presenting_complaint.help_text }}</div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save and send to consultation</button>
+    <a href="{% url 'triage_queue' %}" class="btn btn-link">Back to queue</a>
+</form>
+{% endblock %}

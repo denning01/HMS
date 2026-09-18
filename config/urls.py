@@ -8,5 +8,6 @@ urlpatterns = [
     path("healthz/", views.healthz, name="healthz"),
     path("", include("apps.accounts.urls")),
     path("", include("apps.patients.urls")),
+    path("", include("apps.triage.urls")),
     path("", views.home, name="home"),
 ]

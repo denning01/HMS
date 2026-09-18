@@ -184,3 +184,44 @@ def test_start_visit_rejects_get(receptionist, patient, client):
 
     assert response.status_code == 405
     assert patient.visits.count() == 0
+
+
+def test_patient_detail_renders_with_no_visits(receptionist, patient, client):
+    client.force_login(receptionist)
+
+    response = client.get(reverse("patient_detail", args=[patient.pk]))
+
+    assert response.status_code == 200
+    assert b"Amina Otieno" in response.content
+    assert patient.mrn.encode() in response.content
+    assert b"No visits yet" in response.content
+    assert b"Start visit" in response.content
+
+
+def test_patient_detail_shows_an_open_visit_and_hides_start_button(receptionist, patient, client):
+    client.force_login(receptionist)
+    Visit.objects.create(patient=patient)
+
+    response = client.get(reverse("patient_detail", args=[patient.pk]))
+
+    assert response.status_code == 200
+    assert b"Visit open since" in response.content
+    assert b"Start visit" not in response.content
+
+
+def test_clinical_roles_can_view_a_patient_but_not_start_a_visit(roles, patient, client):
+    doctor = make_user("doc", Role.DOCTOR)
+    client.force_login(doctor)
+
+    response = client.get(reverse("patient_detail", args=[patient.pk]))
+
+    assert response.status_code == 200
+    assert b"Start visit" not in response.content
+
+
+def test_pharmacist_cannot_view_patient_records(roles, patient, client):
+    """The matrix gives Pharmacy no Registration access."""
+    pharmacist = make_user("pharm", Role.PHARMACIST)
+    client.force_login(pharmacist)
+
+    assert client.get(reverse("patient_detail", args=[patient.pk])).status_code == 403
