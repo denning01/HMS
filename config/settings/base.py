@@ -43,7 +43,9 @@ THIRD_PARTY_APPS = [
 ]
 
 # Project apps are added here as each module of the HMS is built.
-LOCAL_APPS = []
+LOCAL_APPS = [
+    "apps.accounts",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -130,3 +132,8 @@ STORAGES = {
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
+
+
+# Custom user model — staff accounts carry roles as Groups (see apps.accounts).
+
+AUTH_USER_MODEL = "accounts.User"

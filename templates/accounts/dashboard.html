@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Hospital Management System{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand navbar-dark bg-dark">
+    <div class="container">
+        <span class="navbar-brand">HMS</span>
+        <div class="ms-auto d-flex align-items-center gap-3">
+            <span class="text-white-50 small">
+                {{ request.user.get_full_name|default:request.user.username }}
+                {% if primary_role_label %}· {{ primary_role_label }}{% endif %}
+            </span>
+            <form method="post" action="{% url 'logout' %}" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-light">Sign out</button>
+            </form>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="h4 mb-1">{{ primary_role_label|default:"Dashboard" }}</h1>
+
+{% if other_roles %}
+    <p class="text-muted small">Also holding: {{ other_roles|join:", " }}</p>
+{% endif %}
+
+{% if modules %}
+    <div class="row g-3 mt-2">
+        {% for label, description in modules %}
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h6 mb-1">{{ label }}</h2>
+                        <p class="text-muted small mb-2">{{ description }}</p>
+                        <span class="badge text-bg-secondary">Not built yet</span>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-warning mt-3">
+        No role has been assigned to this account yet. An administrator needs to
+        add you to a role group before you can use the system.
+    </div>
+{% endif %}
+{% endblock %}
