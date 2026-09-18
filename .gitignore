@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Django
+*.log
+db.sqlite3
+/staticfiles/
+/media/
+
+# Environment — secrets never enter the repo
+.env
+.env.*
+!.env.example
+
+# Tests / tooling
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
