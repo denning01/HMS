@@ -47,6 +47,31 @@ Then open http://127.0.0.1:8000/ — `/healthz/` reports app and database status
 
 Run production settings with `DJANGO_SETTINGS_MODULE=config.settings.prod`.
 
+## Roles
+
+The nine roles from the specification are Django Groups, seeded with:
+
+```bash
+.venv/bin/python manage.py seed_roles     # idempotent; safe on every deploy
+```
+
+One account can hold several roles, as the specification requires. For local
+walkthroughs, `seed_demo_staff` creates one account per role (development only):
+
+```bash
+.venv/bin/python manage.py seed_demo_staff
+```
+
+## Build status
+
+| Phase | Module | State |
+|---|---|---|
+| 0 | Foundation, auth, roles | Done |
+| 1 | Registration, Triage | Done |
+| 2 | Billing engine | Next |
+| 3–8 | Consultation, Lab, Pharmacy, Procedure, Appointments | Not started |
+| 9–10 | Reporting, UAT, go-live | Not started |
+
 ## Tests
 
 ```bash
