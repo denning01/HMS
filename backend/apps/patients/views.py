@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 
 from apps.accounts.models import Role
 from apps.accounts.permissions import role_required
+from apps.billing.services import charge_consultation
 
 from .forms import PatientForm
 from .models import OPEN_VISIT_STATUSES, BillingMode, Patient, Visit, VisitStatus
@@ -129,6 +130,8 @@ def start_visit(request, pk):
             f"{patient.full_name} already has an open visit — continue that one.",
         )
         return redirect("patient_detail", pk=patient.pk)
+
+    charge_consultation(visit, ordered_by=request.user)
 
     messages.success(request, f"Visit started for {patient.full_name}. Sent to triage.")
     return redirect("patient_detail", pk=patient.pk)
