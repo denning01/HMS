@@ -39,10 +39,11 @@ DASHBOARD_MODULES = {
     ],
     Role.CASHIER: [
         ("Point of sale", "Take payment and issue receipts", "till"),
+        ("Today's takings", "Reconcile the drawer at closing", "collections"),
     ],
     Role.FINANCE_MANAGER: [
         ("Bills", "Every open bill and what is outstanding", "till"),
-        ("Revenue", "Collections by date, department and cashier", None),
+        ("Collections", "What was taken today, by department and cashier", "collections"),
         ("Profit per day", "Revenue against recorded costs", None),
     ],
 }

@@ -1,20 +1,25 @@
 """The cashier's screens: the till, one bill, and the receipt it produces."""
 
+from datetime import date
+
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.accounts.models import Role
 from apps.accounts.permissions import role_required
 from apps.patients.models import OPEN_VISIT_STATUSES
 
+from . import reports
 from .models import Invoice, LineStatus, Payment, PaymentMethod
 from .services import BillingError, take_payment
 
 # The Finance Manager reads the bills but does not work the till.
 TILL_ROLES = (Role.CASHIER, Role.ADMINISTRATOR)
 VIEW_ROLES = TILL_ROLES + (Role.FINANCE_MANAGER,)
+REPORT_ROLES = (Role.FINANCE_MANAGER, Role.ADMINISTRATOR, Role.CASHIER)
 
 SEARCH_RESULT_LIMIT = 20
 
@@ -122,4 +127,34 @@ def receipt(request, pk):
         request,
         "billing/receipt.html",
         {"payment": payment, "lines": payment.lines.all(), "invoice": payment.invoice},
+    )
+
+
+@role_required(*REPORT_ROLES)
+def collections(request):
+    """What the clinic took on a given day, and how it splits.
+
+    Defaults to today, which is the reconciliation a cashier does at closing.
+    """
+    day = timezone.localdate()
+    requested = request.GET.get("day", "")
+    if requested:
+        try:
+            day = date.fromisoformat(requested)
+        except ValueError:
+            messages.error(request, "That is not a date — showing today instead.")
+
+    return render(
+        request,
+        "billing/collections.html",
+        {
+            "day": day,
+            "is_today": day == timezone.localdate(),
+            "total": reports.total_collected(day),
+            "by_method": reports.by_method(day),
+            "by_department": reports.by_department(day),
+            "by_cashier": reports.by_cashier(day),
+            "payments": reports.payments_on(day),
+            "outstanding": reports.outstanding_total(),
+        },
     )

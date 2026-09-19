@@ -7,4 +7,5 @@ urlpatterns = [
     path("billing/invoices/<int:pk>/", views.invoice_detail, name="invoice_detail"),
     path("billing/invoices/<int:pk>/pay/", views.pay, name="pay"),
     path("billing/receipts/<int:pk>/", views.receipt, name="receipt"),
+    path("billing/collections/", views.collections, name="collections"),
 ]

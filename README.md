@@ -83,14 +83,35 @@ walkthroughs, `seed_demo_staff` creates one account per role (development only):
 .venv/bin/python manage.py seed_demo_staff
 ```
 
+## Price list
+
+Billing prices everything from the `Service` catalogue; nobody types an amount
+onto a bill. A starting list of 13 items is seeded with:
+
+```bash
+.venv/bin/python manage.py seed_services   # idempotent; never overwrites prices
+```
+
+It creates only what is missing, so running it on a later deploy will not reset
+prices the clinic has set for itself. Prices are maintained in the admin
+afterwards, and every charge copies the price it was raised at, so changing the
+list never rewrites a bill already issued.
+
+## How billing gates the departments
+
+Each visit is either **pay per service** (the default — a department acts on a
+charge once that line is paid) or **consolidated** (staff and corporate accounts
+accumulate charges and settle at the end, and work is never held up). Phase 3
+onwards asks `line.is_cleared` rather than reading payment state directly.
+
 ## Build status
 
 | Phase | Module | State |
 |---|---|---|
 | 0 | Foundation, auth, roles | Done |
 | 1 | Registration, Triage | Done |
-| 2 | Billing engine | Next |
-| 3–8 | Consultation, Lab, Pharmacy, Procedure, Appointments | Not started |
+| 2 | Billing: price list, bills, payment, collections | Done |
+| 3–8 | Consultation, Lab, Pharmacy, Procedure, Appointments | Next |
 | 9–10 | Reporting, UAT, go-live | Not started |
 
 ## Tests
