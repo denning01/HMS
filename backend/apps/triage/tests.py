@@ -124,8 +124,14 @@ def test_triage_queue_requires_the_nurse_role(roles, client):
 
 def test_queue_lists_only_visits_awaiting_triage(nurse, visit, client):
     client.force_login(nurse)
+    other_patient = Patient.objects.create(
+        first_name="Brian",
+        last_name="Otieno",
+        date_of_birth=date(1990, 5, 2),
+        sex="M",
+    )
     seen = Visit.objects.create(
-        patient=visit.patient, status=VisitStatus.AWAITING_CONSULTATION
+        patient=other_patient, status=VisitStatus.AWAITING_CONSULTATION
     )
 
     response = client.get(reverse("triage_queue"))

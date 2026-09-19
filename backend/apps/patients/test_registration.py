@@ -4,11 +4,12 @@ from datetime import date
 
 import pytest
 from django.contrib.auth.models import Group
+from django.db import IntegrityError
 from django.core.management import call_command
 from django.urls import reverse
 
 from apps.accounts.models import Role, User
-from apps.patients.models import Patient, Visit, VisitStatus
+from apps.patients.models import BillingMode, Patient, Visit, VisitStatus
 
 
 @pytest.fixture
@@ -225,3 +226,42 @@ def test_pharmacist_cannot_view_patient_records(roles, patient, client):
     client.force_login(pharmacist)
 
     assert client.get(reverse("patient_detail", args=[patient.pk])).status_code == 403
+
+
+def test_an_unrecognised_billing_mode_is_refused(receptionist, patient, client):
+    """A tampered or stale form must not put a junk value in the billing column."""
+    client.force_login(receptionist)
+
+    response = client.post(
+        reverse("start_visit", args=[patient.pk]), {"billing_mode": "free-for-me"}
+    )
+
+    assert response.status_code == 302
+    assert not patient.visits.exists()
+
+
+def test_billing_mode_defaults_when_the_form_omits_it(receptionist, patient, client):
+    client.force_login(receptionist)
+
+    client.post(reverse("start_visit", args=[patient.pk]), {})
+
+    assert patient.visits.get().billing_mode == BillingMode.PAY_PER_SERVICE
+
+
+def test_the_database_refuses_a_second_open_visit(patient, db):
+    """The rule is a constraint, not just a check in the view: a concurrent
+    request that slips past the view still cannot create the second visit."""
+    Visit.objects.create(patient=patient)
+
+    with pytest.raises(IntegrityError):
+        Visit.objects.create(patient=patient)
+
+
+def test_a_closed_visit_does_not_block_the_next_one(patient, db):
+    first = Visit.objects.create(patient=patient)
+    first.close()
+
+    second = Visit.objects.create(patient=patient)
+
+    assert patient.visits.count() == 2
+    assert second.is_open

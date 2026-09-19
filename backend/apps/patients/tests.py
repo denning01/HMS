@@ -80,6 +80,8 @@ def test_first_visit_flag_distinguishes_new_from_returning(patient):
     first = Visit.objects.create(patient=patient)
     assert first.is_first_visit
 
+    # A patient returns only after the previous attendance has been closed.
+    first.close()
     second = Visit.objects.create(patient=patient)
     assert not second.is_first_visit
     assert not first.is_first_visit

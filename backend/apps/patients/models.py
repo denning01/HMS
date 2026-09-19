@@ -112,6 +112,13 @@ class VisitStatus(models.TextChoices):
     CANCELLED = "cancelled", "Cancelled"
 
 
+OPEN_VISIT_STATUSES = [
+    VisitStatus.AWAITING_TRIAGE,
+    VisitStatus.AWAITING_CONSULTATION,
+    VisitStatus.IN_CONSULTATION,
+]
+
+
 class BillingMode(models.TextChoices):
     """How this visit's charges are settled.
 
@@ -160,13 +167,24 @@ class Visit(models.Model):
         indexes = [
             models.Index(fields=["status", "-started_at"]),
         ]
+        constraints = [
+            # One open visit per patient, enforced by the database rather than by
+            # a check in the view: two concurrent "start visit" posts would both
+            # pass a check-then-create, and the second visit would split one
+            # attendance's charges across two bills.
+            models.UniqueConstraint(
+                fields=["patient"],
+                condition=models.Q(status__in=OPEN_VISIT_STATUSES),
+                name="one_open_visit_per_patient",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.patient.mrn} — {self.started_at:%Y-%m-%d %H:%M}"
 
     @property
     def is_open(self):
-        return self.status not in {VisitStatus.COMPLETED, VisitStatus.CANCELLED}
+        return self.status in set(OPEN_VISIT_STATUSES)
 
     @property
     def is_first_visit(self):

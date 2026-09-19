@@ -1,6 +1,7 @@
 """Registration: find an existing patient or create one, then start a visit."""
 
 from django.contrib import messages
+from django.db import IntegrityError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -9,7 +10,7 @@ from apps.accounts.models import Role
 from apps.accounts.permissions import role_required
 
 from .forms import PatientForm
-from .models import Patient, Visit, VisitStatus
+from .models import OPEN_VISIT_STATUSES, BillingMode, Patient, Visit, VisitStatus
 
 REGISTRATION_ROLES = (Role.RECEPTIONIST, Role.ADMINISTRATOR)
 
@@ -39,7 +40,7 @@ def registration_home(request):
         request,
         "patients/registration_home.html",
         {"open_visits": Visit.objects.filter(
-            status__in=[VisitStatus.AWAITING_TRIAGE, VisitStatus.AWAITING_CONSULTATION]
+            status__in=OPEN_VISIT_STATUSES
         ).select_related("patient")[:10]},
     )
 
@@ -85,13 +86,7 @@ def patient_detail(request, pk):
         {
             "patient": patient,
             "visits": visits,
-            "open_visit": visits.filter(
-                status__in=[
-                    VisitStatus.AWAITING_TRIAGE,
-                    VisitStatus.AWAITING_CONSULTATION,
-                    VisitStatus.IN_CONSULTATION,
-                ]
-            ).first(),
+            "open_visit": visits.filter(status__in=OPEN_VISIT_STATUSES).first(),
             "can_start_visit": request.user.is_superuser
             or any(request.user.has_role(r) for r in REGISTRATION_ROLES),
         },
@@ -108,21 +103,32 @@ def start_visit(request, pk):
     """
     patient = get_object_or_404(Patient, pk=pk)
 
-    existing = patient.visits.exclude(
-        status__in=[VisitStatus.COMPLETED, VisitStatus.CANCELLED]
-    ).first()
-    if existing:
+    if patient.visits.filter(status__in=OPEN_VISIT_STATUSES).exists():
         messages.warning(
             request,
             f"{patient.full_name} already has an open visit — continue that one.",
         )
         return redirect("patient_detail", pk=patient.pk)
 
-    billing_mode = request.POST.get("billing_mode")
-    visit = Visit(patient=patient, created_by=request.user)
-    if billing_mode:
-        visit.billing_mode = billing_mode
-    visit.save()
+    # Anything not in the choices is a tampered or stale form, not a mode.
+    billing_mode = request.POST.get("billing_mode") or BillingMode.PAY_PER_SERVICE
+    if billing_mode not in BillingMode.values:
+        messages.error(request, "Unrecognised billing mode — visit not started.")
+        return redirect("patient_detail", pk=patient.pk)
+
+    try:
+        visit = Visit.objects.create(
+            patient=patient,
+            created_by=request.user,
+            billing_mode=billing_mode,
+        )
+    except IntegrityError:
+        # The one-open-visit constraint fired: a second request got there first.
+        messages.warning(
+            request,
+            f"{patient.full_name} already has an open visit — continue that one.",
+        )
+        return redirect("patient_detail", pk=patient.pk)
 
     messages.success(request, f"Visit started for {patient.full_name}. Sent to triage.")
     return redirect("patient_detail", pk=patient.pk)
