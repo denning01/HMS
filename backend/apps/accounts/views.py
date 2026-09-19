@@ -11,6 +11,7 @@ from .models import Role
 DASHBOARD_MODULES = {
     Role.ADMINISTRATOR: [
         ("Users & roles", "Create staff accounts and assign roles", None),
+        ("Point of sale", "Take payment and issue receipts", "till"),
         ("Price lists", "Consultation, test, drug and procedure pricing", None),
         ("Reports", "Revenue and profit across every department", None),
     ],
@@ -37,10 +38,10 @@ DASHBOARD_MODULES = {
         ("Procedure queue", "Paid procedure orders awaiting action", None),
     ],
     Role.CASHIER: [
-        ("Point of sale", "Take payment and issue receipts", None),
-        ("Today's invoices", "Outstanding balances and daily total", None),
+        ("Point of sale", "Take payment and issue receipts", "till"),
     ],
     Role.FINANCE_MANAGER: [
+        ("Bills", "Every open bill and what is outstanding", "till"),
         ("Revenue", "Collections by date, department and cashier", None),
         ("Profit per day", "Revenue against recorded costs", None),
     ],
