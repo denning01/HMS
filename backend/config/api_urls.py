@@ -8,6 +8,7 @@ from apps.patients import api as patients_api
 from apps.triage import api as triage_api
 
 urlpatterns = [
+    path("auth/csrf/", accounts_api.CsrfView.as_view(), name="api_csrf"),
     path("auth/login/", accounts_api.LoginView.as_view(), name="api_login"),
     path("auth/logout/", accounts_api.LogoutView.as_view(), name="api_logout"),
     path("auth/me/", accounts_api.MeView.as_view(), name="api_me"),

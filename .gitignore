@@ -16,6 +16,10 @@ db.sqlite3
 .env.*
 !.env.example
 
+# Client build
+node_modules/
+frontend/app/dist/
+
 # Tests / tooling
 .pytest_cache/
 .coverage

@@ -1,17 +1,13 @@
-"""Project-level views: the landing page and the platform health check."""
+"""Project-level views: the health check and the shell that serves the client."""
 
 import logging
 
 from django.db import connection
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.views.decorators.cache import never_cache
 
 logger = logging.getLogger(__name__)
-
-
-def home(request):
-    """Placeholder landing page — replaced by the role dashboards in Day 2."""
-    return render(request, "home.html")
 
 
 def healthz(request):
@@ -26,3 +22,15 @@ def healthz(request):
         logger.exception("Health check failed: database unreachable")
         return JsonResponse({"status": "error", "database": "unreachable"}, status=503)
     return JsonResponse({"status": "ok", "database": "ok"})
+
+
+# Never cached: the built index.html names this deploy's hashed bundles, and a
+# cached copy would go on pointing at the previous deploy's files after a release.
+@never_cache
+def spa(request):
+    """Serve the React client for every route it owns.
+
+    The bundle it names is content-hashed by Vite, so the assets cache hard and
+    only this one small document is fetched fresh.
+    """
+    return render(request, "index.html")

@@ -21,7 +21,7 @@ from .serializers import (
     TakePaymentSerializer,
 )
 from .services import BillingError, take_payment
-from .views import SEARCH_RESULT_LIMIT, REPORT_ROLES, TILL_ROLES, VIEW_ROLES
+from .roles import REPORT_ROLES, SEARCH_RESULT_LIMIT, TILL_ROLES, VIEW_ROLES
 
 
 class TillView(APIView):

@@ -13,6 +13,8 @@ import environ
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 BASE_DIR = BACKEND_DIR.parent  # repo root: holds manage.py, .env, backend/, frontend/
 FRONTEND_DIR = BASE_DIR / "frontend"
+# Vite writes the built client here; it is what Django serves in production.
+SPA_DIST = FRONTEND_DIR / "app" / "dist"
 
 env = environ.Env(
     DEBUG=(bool, False),
@@ -70,7 +72,9 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [FRONTEND_DIR / "templates"],
+        # Only one template is rendered now — the client's index.html, which
+        # names this build's hashed bundles.
+        "DIRS": [SPA_DIST],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -121,6 +125,13 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [FRONTEND_DIR / "static"]
 
+# The built client is served straight from dist/ rather than through
+# collectstatic. Vite already content-hashes every asset, and running them
+# through the manifest storage would rename them without rewriting the
+# references in index.html.
+WHITENOISE_ROOT = SPA_DIST
+WHITENOISE_INDEX_FILE = False
+
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -129,13 +140,6 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-
-
-# Auth redirects
-
-LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "dashboard"
-LOGOUT_REDIRECT_URL = "login"
 
 
 # Custom user model — staff accounts carry roles as Groups (see apps.accounts).

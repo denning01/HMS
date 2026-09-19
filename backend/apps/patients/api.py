@@ -16,7 +16,7 @@ from .serializers import (
     StartVisitSerializer,
     VisitSerializer,
 )
-from .views import SEARCH_RESULT_LIMIT, search_patients
+from .selectors import search_patients
 
 REGISTRATION_ROLES = (Role.RECEPTIONIST, Role.ADMINISTRATOR)
 RECORD_VIEW_ROLES = REGISTRATION_ROLES + (Role.TRIAGE_NURSE, Role.DOCTOR, Role.CASHIER)

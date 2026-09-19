@@ -5,11 +5,27 @@ cookie is set httpOnly and never has to be stored or attached by JavaScript.
 """
 
 from django.contrib.auth import authenticate, login, logout
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import LoginSerializer, UserSerializer
+
+
+@method_decorator(ensure_csrf_cookie, name="get")
+class CsrfView(APIView):
+    """Hand the client a CSRF cookie before it posts anything.
+
+    Session authentication still requires the CSRF token, and the client cannot
+    be sent one in the page because there is no server-rendered page any more.
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class LoginView(APIView):

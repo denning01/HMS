@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* One place for the palette, so a clinic rebranding is a few lines here and
+   nothing in the components. */
+@theme {
+  --color-ink: oklch(0.22 0.02 260);
+  --color-muted: oklch(0.55 0.02 260);
+  --color-line: oklch(0.92 0.005 260);
+  --color-surface: oklch(1 0 0);
+  --color-canvas: oklch(0.98 0.004 260);
+
+  --color-brand-50: oklch(0.97 0.02 230);
+  --color-brand-100: oklch(0.93 0.04 230);
+  --color-brand-600: oklch(0.55 0.15 245);
+  --color-brand-700: oklch(0.48 0.15 245);
+
+  --color-danger: oklch(0.55 0.19 25);
+  --color-danger-bg: oklch(0.96 0.03 25);
+  --color-warn: oklch(0.65 0.15 70);
+  --color-warn-bg: oklch(0.96 0.04 80);
+  --color-good: oklch(0.55 0.13 155);
+  --color-good-bg: oklch(0.95 0.04 155);
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Numbers in a bill should line up column to column. */
+.tabular { font-variant-numeric: tabular-nums; }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+}

@@ -3,6 +3,7 @@
 from datetime import date, timedelta
 
 import pytest
+from django.db import IntegrityError
 from django.utils import timezone
 
 from apps.patients.models import BillingMode, Patient, Visit, VisitStatus
@@ -105,3 +106,22 @@ def test_cancelled_visit_is_not_open(patient):
 
     assert not visit.is_open
     assert visit.status == VisitStatus.CANCELLED
+
+
+def test_the_database_refuses_a_second_open_visit(patient):
+    """The rule is a constraint, not just a check in a view: a concurrent request
+    that slips past the check still cannot create the second visit."""
+    Visit.objects.create(patient=patient)
+
+    with pytest.raises(IntegrityError):
+        Visit.objects.create(patient=patient)
+
+
+def test_a_closed_visit_does_not_block_the_next_one(patient):
+    first = Visit.objects.create(patient=patient)
+    first.close()
+
+    second = Visit.objects.create(patient=patient)
+
+    assert patient.visits.count() == 2
+    assert second.is_open

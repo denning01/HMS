@@ -11,12 +11,17 @@ Behaviour spec: `HMS_Documentation.md` (workflow, roles, permissions matrix).
 Backend and frontend are separated at the top level; the stack is unchanged.
 
 ```
-backend/          Django: models, views, URLs, settings
-  apps/           accounts, patients, triage
-  config/         settings/, urls.py, wsgi.py, asgi.py
-frontend/         Everything the browser receives
-  templates/      accounts, patients, triage
-  static/         css/, js/
+backend/          Django. Serves JSON under /api/ and nothing else.
+  apps/           accounts, patients, triage, billing
+    */models.py     the records
+    */services.py   the operations (billing only, so far)
+    */serializers.py + api.py   the JSON surface
+  config/         settings/, urls.py, api_urls.py, wsgi.py, asgi.py
+frontend/app/     React client
+  src/api/        one fetch wrapper, one file of query hooks
+  src/auth/       session context and the role map
+  src/components/ Layout and the shared UI vocabulary
+  src/pages/      one file per screen
 manage.py         Stays at the repo root; puts backend/ on the path
 ```
 
@@ -24,10 +29,27 @@ manage.py         Stays at the repo root; puts backend/ on the path
 (`gunicorn --chdir backend`) each put `backend/` on the import path, so
 `config.*` and `apps.*` import unchanged.
 
+### How the two halves meet
+
+Django serves `/api/`, `/admin/` and `/healthz/`. Every other path returns the
+client's `index.html`, so a reload or a pasted link on `/billing/invoices/3`
+lands in the app rather than a 404.
+
+The client is same-origin in both environments — Vite proxies `/api` to Django
+in development, WhiteNoise serves the built bundle beside it in production. So
+authentication is a plain Django **session cookie**: httpOnly, never readable by
+JavaScript, never stored anywhere an XSS could reach. There is no token and no
+CORS configuration. Unsafe requests carry the CSRF token Django sets, which the
+client fetches once from `/api/auth/csrf/` on boot.
+
+Role gating exists on both sides and means different things. `HasAnyRole` on the
+API is the security boundary. The role checks in the client are navigation: they
+keep a nurse from clicking into a screen that would only refuse them.
+
 ## Stack
 
-- Django 6.1 + server-rendered templates (HTMX + Alpine.js + Bootstrap 5)
-- PostgreSQL 16
+- **Backend** — Django 6.1 + Django REST Framework, PostgreSQL 16
+- **Client** — React 19 + Vite, React Router, TanStack Query, Tailwind CSS 4
 - Gunicorn + WhiteNoise for deployment
 
 ## Local setup
@@ -45,15 +67,29 @@ docker start hmis-postgres  # or, first time:
 python3 -m venv .venv
 .venv/bin/pip install -r requirements/dev.txt
 
-# 3. Environment file
+# 3. Client dependencies
+npm --prefix frontend/app install
+
+# 4. Environment file
 cp .env.example .env   # then fill in SECRET_KEY and DATABASE_URL
 
-# 4. Run
+# 5. Run both halves, in two terminals
 .venv/bin/python manage.py migrate
-.venv/bin/python manage.py runserver
+.venv/bin/python manage.py runserver        # API on :8000
+npm --prefix frontend/app run dev           # client on :5173
 ```
 
-Then open http://127.0.0.1:8000/ — `/healthz/` reports app and database status.
+Develop against **http://127.0.0.1:5173/** — Vite serves the client with hot
+reload and proxies `/api` to Django. `/healthz/` on :8000 reports app and
+database status.
+
+To check the production arrangement locally, build the client and let Django
+serve it on :8000 alone:
+
+```bash
+npm --prefix frontend/app run build
+.venv/bin/python manage.py runserver
+```
 
 ## Settings
 
@@ -111,11 +147,16 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 | 0 | Foundation, auth, roles | Done |
 | 1 | Registration, Triage | Done |
 | 2 | Billing: price list, bills, payment, collections | Done |
+| — | JSON API + React client (replaced the server-rendered screens) | Done |
 | 3–8 | Consultation, Lab, Pharmacy, Procedure, Appointments | Next |
 | 9–10 | Reporting, UAT, go-live | Not started |
 
 ## Tests
 
 ```bash
-.venv/bin/pytest
+.venv/bin/pytest                    # backend, including the whole API surface
+npx --prefix frontend/app oxlint src
 ```
+
+The API tests are the guard on every rule the screens used to enforce: who may
+call what, what the server refuses, and that a client cannot dictate an amount.
