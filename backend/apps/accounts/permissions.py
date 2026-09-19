@@ -7,7 +7,8 @@ declare the roles they serve rather than checking individual model permissions.
 from functools import wraps
 
 from django.contrib.auth.views import redirect_to_login
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+from rest_framework import permissions
 
 
 def user_has_any_role(user, roles):
@@ -41,3 +42,22 @@ def role_required(*roles):
         return wrapper
 
     return decorator
+
+
+class HasAnyRole(permissions.BasePermission):
+    """DRF counterpart of role_required, for the API the React client calls.
+
+    A view declares `roles = (Role.CASHIER, ...)`. The same rule as the server
+    -rendered screens: authentication is not enough, the role is what decides,
+    and superusers hold every role.
+    """
+
+    message = "Your role does not give you access to this."
+
+    def has_permission(self, request, view):
+        roles = getattr(view, "roles", None)
+        if roles is None:
+            raise ImproperlyConfigured(
+                f"{view.__class__.__name__} uses HasAnyRole but declares no roles."
+            )
+        return user_has_any_role(request.user, roles)

@@ -1,0 +1,152 @@
+"""Billing over the API: the till, one bill, taking payment, and collections."""
+
+from datetime import date
+
+from django.db.models import Q
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.accounts.models import Role
+from apps.accounts.permissions import HasAnyRole, user_has_any_role
+from apps.patients.models import OPEN_VISIT_STATUSES
+
+from . import reports
+from .models import Invoice, Payment, PaymentMethod
+from .serializers import (
+    InvoiceSerializer,
+    InvoiceSummarySerializer,
+    PaymentSerializer,
+    ReceiptSerializer,
+    TakePaymentSerializer,
+)
+from .services import BillingError, take_payment
+from .views import SEARCH_RESULT_LIMIT, REPORT_ROLES, TILL_ROLES, VIEW_ROLES
+
+
+class TillView(APIView):
+    """Bills with something still to pay, oldest first."""
+
+    permission_classes = [HasAnyRole]
+    roles = VIEW_ROLES
+
+    def get(self, request):
+        term = request.query_params.get("q", "").strip()
+
+        invoices = (
+            Invoice.objects.filter(visit__status__in=OPEN_VISIT_STATUSES)
+            .select_related("visit__patient")
+            .prefetch_related("lines")
+            .order_by("created_at")
+        )
+
+        if term:
+            invoices = invoices.filter(
+                Q(number__icontains=term)
+                | Q(visit__patient__mrn__icontains=term)
+                | Q(visit__patient__first_name__icontains=term)
+                | Q(visit__patient__last_name__icontains=term)
+            )
+
+        # Settled bills are still open visits but are not the cashier's work.
+        outstanding = [
+            invoice for invoice in invoices[:SEARCH_RESULT_LIMIT] if not invoice.is_settled
+        ]
+
+        return Response(InvoiceSummarySerializer(outstanding, many=True).data)
+
+
+class InvoiceDetailView(generics.RetrieveAPIView):
+    permission_classes = [HasAnyRole]
+    roles = VIEW_ROLES
+    serializer_class = InvoiceSerializer
+    queryset = Invoice.objects.select_related("visit__patient").prefetch_related(
+        "lines__service", "lines__payment", "payments__received_by"
+    )
+
+    def retrieve(self, request, *args, **kwargs):
+        data = self.get_serializer(self.get_object()).data
+        # The client hides the payment form on this, and the server refuses the
+        # post regardless — the flag only keeps a useless form off the screen.
+        data["can_take_payment"] = user_has_any_role(request.user, TILL_ROLES)
+        return Response(data)
+
+
+class TakePaymentView(APIView):
+    """Settle the selected charges and issue one receipt covering them."""
+
+    permission_classes = [HasAnyRole]
+    roles = TILL_ROLES
+
+    def post(self, request, pk):
+        invoice = generics.get_object_or_404(Invoice, pk=pk)
+
+        form = TakePaymentSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+
+        try:
+            payment = take_payment(
+                invoice=invoice,
+                line_ids=form.validated_data["lines"],
+                method=form.validated_data["method"],
+                received_by=request.user,
+                reference=form.validated_data.get("reference", ""),
+            )
+        except BillingError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
+
+        return Response(
+            ReceiptSerializer(payment).data, status=status.HTTP_201_CREATED
+        )
+
+
+class ReceiptView(generics.RetrieveAPIView):
+    permission_classes = [HasAnyRole]
+    roles = VIEW_ROLES
+    serializer_class = ReceiptSerializer
+    queryset = Payment.objects.select_related(
+        "invoice__visit__patient", "received_by"
+    ).prefetch_related("lines__service")
+
+
+class CollectionsView(APIView):
+    """What the clinic took on a day, and how it splits."""
+
+    permission_classes = [HasAnyRole]
+    roles = REPORT_ROLES
+
+    def get(self, request):
+        from django.utils import timezone
+
+        day = timezone.localdate()
+        invalid_day = False
+
+        requested = request.query_params.get("day", "")
+        if requested:
+            try:
+                day = date.fromisoformat(requested)
+            except ValueError:
+                invalid_day = True
+
+        return Response(
+            {
+                "day": day.isoformat(),
+                "is_today": day == timezone.localdate(),
+                "invalid_day": invalid_day,
+                "total": str(reports.total_collected(day)),
+                "outstanding": str(reports.outstanding_total()),
+                "by_method": [
+                    {**row, "total": str(row["total"])} for row in reports.by_method(day)
+                ],
+                "by_department": [
+                    {**row, "total": str(row["total"])} for row in reports.by_department(day)
+                ],
+                "by_cashier": [
+                    {**row, "total": str(row["total"])} for row in reports.by_cashier(day)
+                ],
+                "payments": PaymentSerializer(reports.payments_on(day), many=True).data,
+                "methods": [
+                    {"value": value, "label": label} for value, label in PaymentMethod.choices
+                ],
+            }
+        )

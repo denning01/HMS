@@ -6,6 +6,7 @@ from . import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("healthz/", views.healthz, name="healthz"),
+    path("api/", include("config.api_urls")),
     path("", include("apps.accounts.urls")),
     path("", include("apps.patients.urls")),
     path("", include("apps.triage.urls")),

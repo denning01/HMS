@@ -41,7 +41,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "django_htmx",
+    "rest_framework",
 ]
 
 # Project apps are added here as each module of the HMS is built.
@@ -63,7 +63,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django_htmx.middleware.HtmxMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -142,3 +141,21 @@ LOGOUT_REDIRECT_URL = "login"
 # Custom user model — staff accounts carry roles as Groups (see apps.accounts).
 
 AUTH_USER_MODEL = "accounts.User"
+
+
+# API — the React client is served from the same origin (Vite proxies /api in
+# development, WhiteNoise serves the built bundle in production), so session
+# cookies authenticate it. No tokens are stored in the browser, and no CORS.
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    "UNAUTHENTICATED_USER": "django.contrib.auth.models.AnonymousUser",
+}
