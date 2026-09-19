@@ -2,6 +2,10 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from pathlib import Path
+
+# The Django packages (config, apps) live under backend/, not at the repo root.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "backend"))
 
 
 def main():

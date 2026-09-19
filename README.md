@@ -6,6 +6,24 @@ sharing one patient record and one visit record.
 
 Behaviour spec: `HMS_Documentation.md` (workflow, roles, permissions matrix).
 
+## Layout
+
+Backend and frontend are separated at the top level; the stack is unchanged.
+
+```
+backend/          Django: models, views, URLs, settings
+  apps/           accounts, patients, triage
+  config/         settings/, urls.py, wsgi.py, asgi.py
+frontend/         Everything the browser receives
+  templates/      accounts, patients, triage
+  static/         css/, js/
+manage.py         Stays at the repo root; puts backend/ on the path
+```
+
+`manage.py`, `pytest.ini` (`pythonpath = backend`) and the `Procfile`
+(`gunicorn --chdir backend`) each put `backend/` on the import path, so
+`config.*` and `apps.*` import unchanged.
+
 ## Stack
 
 - Django 6.1 + server-rendered templates (HTMX + Alpine.js + Bootstrap 5)
@@ -39,13 +57,16 @@ Then open http://127.0.0.1:8000/ — `/healthz/` reports app and database status
 
 ## Settings
 
-`config/settings/` is split three ways:
+`backend/config/settings/` is split three ways:
 
 - `base.py` — shared; reads all secrets and `DATABASE_URL` from the environment
 - `dev.py` — local default (`manage.py` points here)
 - `prod.py` — `DEBUG=False`, HTTPS/cookie hardening, stdout logging
 
-Run production settings with `DJANGO_SETTINGS_MODULE=config.settings.prod`.
+`manage.py` defaults to `dev`; `wsgi.py`/`asgi.py` default to `prod`, so a
+deployment that forgets to set `DJANGO_SETTINGS_MODULE` fails closed rather
+than serving with `DEBUG=True`. Override with
+`DJANGO_SETTINGS_MODULE=config.settings.prod` for local prod checks.
 
 ## Roles
 
