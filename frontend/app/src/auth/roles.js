@@ -76,7 +76,7 @@ export const MODULES = [
       { label: 'Bills', description: 'Every open bill and what is outstanding', to: '/billing' },
       { label: 'Collections', description: 'What was taken today, by department and cashier', to: '/billing/collections' },
       { label: 'Stock', description: 'What is on the shelf and what it cost', to: '/pharmacy/stock' },
-      { label: 'Profit per day', description: 'Revenue against recorded costs', to: null },
+      { label: 'Revenue and profit', description: 'Takings against the stock they used', to: '/reports' },
     ],
   },
   {
@@ -92,6 +92,7 @@ export const MODULES = [
       { label: 'Stock', description: 'Stock in, write-offs, low-stock and expiry alerts', to: '/pharmacy/stock' },
       { label: 'Point of sale', description: 'Take payment and issue receipts', to: '/billing' },
       { label: 'Collections', description: 'What was taken today, by department and cashier', to: '/billing/collections' },
+      { label: 'Revenue and profit', description: 'Takings against the stock they used', to: '/reports' },
       { label: 'Price lists', description: 'Consultation, test, drug and procedure pricing', to: '/admin/billing/service/' },
     ],
   },

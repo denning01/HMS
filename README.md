@@ -14,7 +14,7 @@ Backend and frontend are separated at the top level; the stack is unchanged.
 backend/          Django. Serves JSON under /api/ and nothing else.
   apps/           accounts, patients, triage, billing,
                   orders, consultation, laboratory, pharmacy,
-                  procedures, appointments
+                  procedures, appointments, reporting
     */models.py     the records
     */services.py   the operations — every rule that refuses something
     */selectors.py  the reads more than one caller needs
@@ -166,6 +166,26 @@ the clinic has corrected in the admin survives the next deploy. Neither puts any
 stock on the shelf — quantities arrive as batches when the pharmacist receives a
 delivery, because that is where cost and expiry come from.
 
+## Revenue and profit
+
+Revenue is read from the payments and the lines they settled. Cost is read from
+the stock that actually left the shelf, at what those units were bought for.
+Both already exist as records someone signed for, so the report cannot say
+anything the receipts and the ledger do not.
+
+Two limits are stated on the screen rather than left to be discovered:
+
+- Only the pharmacy and the procedure room have a recorded cost, so profit is
+  overstated by whatever reagents and time cost in the lab and the consulting
+  room.
+- Revenue is recognised when the money is taken and cost when the stock moves.
+  Over a week that comes out; on the boundary of a single day it can be a little
+  out, and that is the honest limit of a daily profit figure drawn from two
+  different events.
+
+Wastage, expiry and stock corrections are reported as losses, never folded into
+cost of sale — a bad month should not read as an expensive one.
+
 ## Stock
 
 Cost sits on the batch, not on the drug: it is what was actually paid for those
@@ -196,7 +216,8 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 | 5 | Pharmacy: prescriptions, dispensing, stock and batches | Done |
 | 6 | Procedure room: worklist, procedure done, consumables used | Done |
 | 7 | Appointments: the diary, arrivals and follow-ups | Done |
-| 8–10 | Reporting, admin screens, UAT, go-live | Next |
+| 8 | Reporting: revenue, cost and profit over a period | Done |
+| 9–10 | Admin screens, UAT, go-live | Next |
 | 9–10 | Reporting, UAT, go-live | Not started |
 
 ## Tests

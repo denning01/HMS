@@ -20,6 +20,7 @@ import Receipt from './pages/Receipt'
 import ProcedureOrder from './pages/ProcedureOrder'
 import ProcedureWorklist from './pages/ProcedureWorklist'
 import Registration from './pages/Registration'
+import Reports from './pages/Reports'
 import Stock from './pages/Stock'
 import StockItem from './pages/StockItem'
 import Till from './pages/Till'
@@ -55,6 +56,8 @@ const PHARMACY = [Role.PHARMACIST, Role.ADMINISTRATOR]
 const PROCEDURES = [Role.PROCEDURE_NURSE, Role.ADMINISTRATOR]
 // Finance answers for the money tied up on the shelf, so it reads stock too.
 const STOCK = [...PHARMACY, Role.FINANCE_MANAGER]
+// Profit is the owner's figure; the cashier reconciles their day in Collections.
+const FINANCE = [Role.FINANCE_MANAGER, Role.ADMINISTRATOR]
 
 export default function App() {
   const { user, ready } = useAuth()
@@ -94,6 +97,7 @@ export default function App() {
         <Route path="billing" element={<Allow roles={BILLING}><Till /></Allow>} />
         <Route path="billing/invoices/:id" element={<Allow roles={BILLING}><Invoice /></Allow>} />
         <Route path="billing/receipts/:id" element={<Allow roles={BILLING}><Receipt /></Allow>} />
+        <Route path="reports" element={<Allow roles={FINANCE}><Reports /></Allow>} />
         <Route path="billing/collections" element={<Allow roles={BILLING}><Collections /></Allow>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />

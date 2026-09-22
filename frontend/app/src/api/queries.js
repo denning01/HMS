@@ -27,6 +27,7 @@ export const keys = {
   invoice: (id) => ['billing', 'invoice', id],
   receipt: (id) => ['billing', 'receipt', id],
   collections: (day) => ['billing', 'collections', day],
+  revenue: (from, to) => ['reports', 'revenue', from, to],
 }
 
 // A queue on a wall-mounted screen must not go stale while nobody touches it.
@@ -343,6 +344,19 @@ export function useReceipt(id) {
   return useQuery({
     queryKey: keys.receipt(id),
     queryFn: () => api.get(`/billing/receipts/${id}/`),
+  })
+}
+
+export function useRevenueReport(from, to) {
+  return useQuery({
+    queryKey: keys.revenue(from, to),
+    queryFn: () => {
+      const query = new URLSearchParams()
+      if (from) query.set('from', from)
+      if (to) query.set('to', to)
+      return api.get(`/reports/revenue/${query.size ? `?${query}` : ''}`)
+    },
+    placeholderData: (previous) => previous,
   })
 }
 
