@@ -16,6 +16,10 @@ export const keys = {
   services: (department) => ['billing', 'services', department],
   labWorklist: ['lab', 'worklist'],
   labOrder: (id) => ['lab', 'order', id],
+  dispensingQueue: ['pharmacy', 'dispensing'],
+  prescription: (id) => ['pharmacy', 'order', id],
+  stock: ['pharmacy', 'stock'],
+  stockItem: (id) => ['pharmacy', 'stock', id],
   till: (term) => ['billing', 'till', term],
   invoice: (id) => ['billing', 'invoice', id],
   receipt: (id) => ['billing', 'receipt', id],
@@ -185,6 +189,62 @@ function useLabStep(orderId, step) {
 export const useCollectSpecimen = (orderId) => useLabStep(orderId, 'collect')
 export const useRecordResult = (orderId) => useLabStep(orderId, 'result')
 export const useReleaseResult = (orderId) => useLabStep(orderId, 'release')
+
+export function useDispensingQueue() {
+  return useQuery({
+    queryKey: keys.dispensingQueue,
+    queryFn: () => api.get('/pharmacy/dispensing/'),
+    refetchInterval: QUEUE_REFRESH_MS,
+  })
+}
+
+export function usePrescription(orderId) {
+  return useQuery({
+    queryKey: keys.prescription(orderId),
+    queryFn: () => api.get(`/pharmacy/orders/${orderId}/`),
+  })
+}
+
+export function useDispense(orderId) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.post(`/pharmacy/orders/${orderId}/dispense/`, {}),
+    onSuccess: () => {
+      // Dispensing moves the queue, the shelf and the visit at once.
+      queryClient.invalidateQueries({ queryKey: ['pharmacy'] })
+      queryClient.invalidateQueries({ queryKey: ['consultation'] })
+    },
+  })
+}
+
+export function useStock() {
+  return useQuery({ queryKey: keys.stock, queryFn: () => api.get('/pharmacy/stock/') })
+}
+
+export function useStockItem(itemId) {
+  return useQuery({
+    queryKey: keys.stockItem(itemId),
+    queryFn: () => api.get(`/pharmacy/stock/${itemId}/`),
+  })
+}
+
+function useStockMutation(mutationFn) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pharmacy'] }),
+  })
+}
+
+export function useReceiveStock(itemId) {
+  return useStockMutation((values) => api.post(`/pharmacy/stock/${itemId}/receive/`, values))
+}
+
+export function useWriteOff() {
+  return useStockMutation(({ batchId, ...values }) =>
+    api.post(`/pharmacy/batches/${batchId}/write-off/`, values),
+  )
+}
 
 export function useTill(term) {
   return useQuery({

@@ -7,19 +7,21 @@ from rest_framework.views import APIView
 
 from apps.accounts.models import Role
 from apps.accounts.permissions import HasAnyRole, user_has_any_role
-from apps.billing.models import Service
+from apps.billing.models import Department, Service
 from apps.billing.serializers import InvoiceSerializer
 from apps.orders.models import Order
 from apps.orders.selectors import orders_for
-from apps.orders.serializers import OrderSerializer, PlaceOrderSerializer
+from apps.orders.serializers import OrderSerializer
 from apps.orders.services import OrderError, cancel_order, place_order
 from apps.patients.models import Sex, Visit, VisitStatus
+from apps.pharmacy.services import PharmacyError, attach_prescription
 from apps.patients.serializers import VisitSerializer
 from apps.triage.serializers import VitalsSerializer
 
 from .models import Consultation
 from .serializers import (
     CONDITIONAL_HISTORY_FIELDS,
+    ConsultationOrderRequestSerializer,
     ConsultationOrderSerializer,
     ConsultationQueueSerializer,
     ConsultationSerializer,
@@ -37,7 +39,10 @@ QUEUE_STATUSES = [VisitStatus.AWAITING_CONSULTATION, VisitStatus.IN_CONSULTATION
 
 def visit_queryset():
     return Visit.objects.select_related("patient", "vitals", "consultation").prefetch_related(
-        "orders__service", "orders__invoice_line__invoice__visit", "orders__lab_result"
+        "orders__service",
+        "orders__invoice_line__invoice__visit",
+        "orders__lab_result",
+        "orders__prescription",
     )
 
 
@@ -74,7 +79,7 @@ class ConsultationDetailView(APIView):
                 else None,
                 "consultation": ConsultationSerializer(note).data if note else None,
                 "orders": ConsultationOrderSerializer(
-                    orders_for(visit).select_related("lab_result"), many=True
+                    orders_for(visit).select_related("lab_result", "prescription"), many=True
                 ).data,
                 "invoice": InvoiceSerializer(invoice).data if invoice else None,
                 # Navigation for the client; the server refuses the write regardless.
@@ -140,7 +145,7 @@ class ConsultationOrdersView(APIView):
                 status=status.HTTP_409_CONFLICT,
             )
 
-        form = PlaceOrderSerializer(data=request.data)
+        form = ConsultationOrderRequestSerializer(data=request.data)
         form.is_valid(raise_exception=True)
 
         service = generics.get_object_or_404(Service, pk=form.validated_data["service"])
@@ -160,7 +165,18 @@ class ConsultationOrdersView(APIView):
         except OrderError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
 
-        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+        # A drug carries the doctor's directions; the pharmacist dispenses from
+        # them and they are what ends up on the packet.
+        if order.department == Department.PHARMACY:
+            try:
+                attach_prescription(order, **form.validated_data.get("directions", {}))
+            except PharmacyError as exc:
+                return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
+
+        order.refresh_from_db()
+        return Response(
+            ConsultationOrderSerializer(order).data, status=status.HTTP_201_CREATED
+        )
 
 
 class CancelOrderView(APIView):

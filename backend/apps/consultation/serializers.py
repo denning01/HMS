@@ -3,7 +3,8 @@
 from rest_framework import serializers
 
 from apps.laboratory.serializers import LabResultSerializer
-from apps.orders.serializers import OrderSerializer
+from apps.orders.serializers import OrderSerializer, PlaceOrderSerializer
+from apps.pharmacy.serializers import DirectionsSerializer, PrescriptionSerializer
 from apps.patients.serializers import VisitSerializer
 from apps.triage.serializers import VitalsSerializer
 
@@ -104,12 +105,27 @@ class ConsultationOrderSerializer(OrderSerializer):
     """
 
     result = serializers.SerializerMethodField()
+    prescription = serializers.SerializerMethodField()
 
     class Meta(OrderSerializer.Meta):
-        fields = OrderSerializer.Meta.fields + ["result"]
+        fields = OrderSerializer.Meta.fields + ["result", "prescription"]
 
     def get_result(self, order):
         result = getattr(order, "lab_result", None)
         if result is None or not result.is_released:
             return None
         return LabResultSerializer(result).data
+
+    def get_prescription(self, order):
+        prescription = getattr(order, "prescription", None)
+        return PrescriptionSerializer(prescription).data if prescription else None
+
+
+class ConsultationOrderRequestSerializer(PlaceOrderSerializer):
+    """What the doctor posts to order something.
+
+    Directions come with the order rather than after it: a drug ordered without
+    saying how it is to be taken is a packet the patient cannot use.
+    """
+
+    directions = DirectionsSerializer(required=False)

@@ -53,8 +53,8 @@ export const MODULES = [
   {
     role: Role.PHARMACIST,
     items: [
-      { label: 'Dispensing queue', description: 'Paid prescriptions awaiting dispensing', to: null },
-      { label: 'Stock', description: 'Stock in, write-offs, low-stock and expiry alerts', to: null },
+      { label: 'Dispensing', description: 'Paid prescriptions awaiting dispensing', to: '/pharmacy' },
+      { label: 'Stock', description: 'Stock in, write-offs, low-stock and expiry alerts', to: '/pharmacy/stock' },
     ],
   },
   {
@@ -73,6 +73,7 @@ export const MODULES = [
     items: [
       { label: 'Bills', description: 'Every open bill and what is outstanding', to: '/billing' },
       { label: 'Collections', description: 'What was taken today, by department and cashier', to: '/billing/collections' },
+      { label: 'Stock', description: 'What is on the shelf and what it cost', to: '/pharmacy/stock' },
       { label: 'Profit per day', description: 'Revenue against recorded costs', to: null },
     ],
   },
@@ -83,6 +84,8 @@ export const MODULES = [
       { label: 'Registration', description: 'Find or register a patient and start a visit', to: '/registration' },
       { label: 'Consultation', description: 'Patients ready to be seen', to: '/consultation' },
       { label: 'Lab worklist', description: 'Paid test orders awaiting processing', to: '/lab' },
+      { label: 'Dispensing', description: 'Paid prescriptions awaiting dispensing', to: '/pharmacy' },
+      { label: 'Stock', description: 'Stock in, write-offs, low-stock and expiry alerts', to: '/pharmacy/stock' },
       { label: 'Point of sale', description: 'Take payment and issue receipts', to: '/billing' },
       { label: 'Collections', description: 'What was taken today, by department and cashier', to: '/billing/collections' },
       { label: 'Price lists', description: 'Consultation, test, drug and procedure pricing', to: '/admin/billing/service/' },

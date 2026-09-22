@@ -13,7 +13,7 @@ Backend and frontend are separated at the top level; the stack is unchanged.
 ```
 backend/          Django. Serves JSON under /api/ and nothing else.
   apps/           accounts, patients, triage, billing,
-                  orders, consultation, laboratory
+                  orders, consultation, laboratory, pharmacy
     */models.py     the records
     */services.py   the operations — every rule that refuses something
     */selectors.py  the reads more than one caller needs
@@ -148,12 +148,29 @@ stamps the specification asks for — collected, recorded, released. A result is
 invisible to the doctor until it is released, because until then nobody has put
 their name to it.
 
+The pharmacy's is `Prescription` — the directions the drug goes out with — and
+dispensing moves stock off the shelf in the same transaction, so pharmacy sales
+and inventory cannot drift apart.
+
 ```bash
-.venv/bin/python manage.py seed_lab_tests   # specimen types and normal ranges
+.venv/bin/python manage.py seed_lab_tests     # specimen types and normal ranges
+.venv/bin/python manage.py seed_stock_items   # the shelf, and the consumables
 ```
 
-Idempotent, and it never overwrites: a reference range the clinic has corrected
-in the admin survives the next deploy.
+Both are idempotent and neither overwrites: a reference range or a reorder level
+the clinic has corrected in the admin survives the next deploy. Neither puts any
+stock on the shelf — quantities arrive as batches when the pharmacist receives a
+delivery, because that is where cost and expiry come from.
+
+## Stock
+
+Cost sits on the batch, not on the drug: it is what was actually paid for those
+units. Every unit in and every unit out is a `StockMovement` with a reason and a
+person, written in the same transaction that changes the batch balance, and
+dispensing takes the batch that expires first. Profit per day (Phase 9) is
+revenue minus the cost of the units that actually left the shelf, and that
+answer only exists because each movement carries the cost of the batch it came
+out of.
 
 ## How billing gates the departments
 
@@ -172,7 +189,8 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 | — | JSON API + React client (replaced the server-rendered screens) | Done |
 | 3 | Consultation: the note, orders, closing the visit | Done |
 | 4 | Laboratory: worklist, specimen, result, release | Done |
-| 5–8 | Pharmacy, Procedure, Appointments | Next |
+| 5 | Pharmacy: prescriptions, dispensing, stock and batches | Done |
+| 6–8 | Procedure room, Appointments | Next |
 | 9–10 | Reporting, UAT, go-live | Not started |
 
 ## Tests

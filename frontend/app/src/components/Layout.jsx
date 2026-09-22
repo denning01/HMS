@@ -14,7 +14,8 @@ function Nav() {
         <NavLink
           key={item.to}
           to={item.to}
-          end={item.to === '/billing'}
+          // Parents of a deeper route, so they do not stay lit on a child screen.
+          end={item.to === '/billing' || item.to === '/pharmacy'}
           className={({ isActive }) =>
             [
               'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',

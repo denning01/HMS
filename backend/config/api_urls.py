@@ -6,6 +6,7 @@ from apps.accounts import api as accounts_api
 from apps.billing import api as billing_api
 from apps.consultation import api as consultation_api
 from apps.laboratory import api as laboratory_api
+from apps.pharmacy import api as pharmacy_api
 from apps.patients import api as patients_api
 from apps.triage import api as triage_api
 
@@ -33,6 +34,14 @@ urlpatterns = [
     path("lab/orders/<int:pk>/collect/", laboratory_api.CollectSpecimenView.as_view(), name="api_lab_collect"),
     path("lab/orders/<int:pk>/result/", laboratory_api.RecordResultView.as_view(), name="api_lab_result"),
     path("lab/orders/<int:pk>/release/", laboratory_api.ReleaseResultView.as_view(), name="api_lab_release"),
+
+    path("pharmacy/dispensing/", pharmacy_api.DispensingQueueView.as_view(), name="api_dispensing"),
+    path("pharmacy/orders/<int:pk>/", pharmacy_api.PrescriptionView.as_view(), name="api_prescription"),
+    path("pharmacy/orders/<int:pk>/dispense/", pharmacy_api.DispenseView.as_view(), name="api_dispense"),
+    path("pharmacy/stock/", pharmacy_api.StockView.as_view(), name="api_stock"),
+    path("pharmacy/stock/<int:pk>/", pharmacy_api.StockItemView.as_view(), name="api_stock_item"),
+    path("pharmacy/stock/<int:pk>/receive/", pharmacy_api.ReceiveStockView.as_view(), name="api_receive_stock"),
+    path("pharmacy/batches/<int:pk>/write-off/", pharmacy_api.WriteOffView.as_view(), name="api_write_off"),
 
     path("billing/services/", billing_api.ServiceListView.as_view(), name="api_services"),
     path("billing/till/", billing_api.TillView.as_view(), name="api_till"),

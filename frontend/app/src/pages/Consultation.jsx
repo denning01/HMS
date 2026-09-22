@@ -109,14 +109,28 @@ function orderState(order) {
   return { tone: 'neutral', label: 'With the department' }
 }
 
+const BLANK_DIRECTIONS = { dosage: '', frequency: '', duration: '', instructions: '' }
+
+const DIRECTION_FIELDS = [
+  { name: 'dosage', label: 'Dose', placeholder: '1 tablet' },
+  { name: 'frequency', label: 'How often', placeholder: 'three times a day' },
+  { name: 'duration', label: 'For how long', placeholder: '5 days' },
+  { name: 'instructions', label: 'Instructions', placeholder: 'after food' },
+]
+
 function OrderPicker({ visitId, disabled }) {
   const [department, setDepartment] = useState('')
   const [service, setService] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [details, setDetails] = useState('')
+  const [directions, setDirections] = useState(BLANK_DIRECTIONS)
 
   const services = useServices(department)
   const place = usePlaceOrder(visitId)
+
+  // A drug goes out with directions on the packet, so they are asked for with
+  // the order rather than left to the pharmacist to guess at the counter.
+  const isPrescription = department === 'pharmacy'
 
   async function submit(event) {
     event.preventDefault()
@@ -125,6 +139,7 @@ function OrderPicker({ visitId, disabled }) {
         service: Number(service),
         quantity: Number(quantity),
         clinical_details: details,
+        ...(isPrescription ? { directions } : {}),
       })
       .catch(() => null)
 
@@ -132,6 +147,7 @@ function OrderPicker({ visitId, disabled }) {
       setService('')
       setQuantity('1')
       setDetails('')
+      setDirections(BLANK_DIRECTIONS)
     }
   }
 
@@ -182,6 +198,22 @@ function OrderPicker({ visitId, disabled }) {
         </Field>
       </div>
 
+      {isPrescription && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-4">
+          {DIRECTION_FIELDS.map((field) => (
+            <Field key={field.name} label={field.label}>
+              <Input
+                value={directions[field.name]}
+                onChange={(event) =>
+                  setDirections({ ...directions, [field.name]: event.target.value })
+                }
+                placeholder={field.placeholder}
+              />
+            </Field>
+          ))}
+        </div>
+      )}
+
       <Field label="Clinical details" className="mt-3" hint="What the department needs to know">
         <Textarea rows={2} value={details} onChange={(event) => setDetails(event.target.value)} />
       </Field>
@@ -218,6 +250,7 @@ function OrdersCard({ visitId, orders, canEdit }) {
                   <span className="mt-0.5 block text-xs text-muted">
                     {order.department_display}
                     {order.ordered_by_name && ` · ${order.ordered_by_name}`}
+                    {order.prescription?.directions && ` · ${order.prescription.directions}`}
                   </span>
                   {order.clinical_details && (
                     <span className="mt-0.5 block text-xs text-muted">{order.clinical_details}</span>
