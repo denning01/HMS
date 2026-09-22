@@ -43,6 +43,7 @@ def visit_queryset():
         "orders__invoice_line__invoice__visit",
         "orders__lab_result",
         "orders__prescription",
+        "orders__procedure_record",
     )
 
 
@@ -79,7 +80,8 @@ class ConsultationDetailView(APIView):
                 else None,
                 "consultation": ConsultationSerializer(note).data if note else None,
                 "orders": ConsultationOrderSerializer(
-                    orders_for(visit).select_related("lab_result", "prescription"), many=True
+                    orders_for(visit).select_related("lab_result", "prescription", "procedure_record"),
+                    many=True,
                 ).data,
                 "invoice": InvoiceSerializer(invoice).data if invoice else None,
                 # Navigation for the client; the server refuses the write regardless.

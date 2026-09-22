@@ -165,6 +165,13 @@ class StockMovement(models.Model):
         null=True,
         blank=True,
     )
+    procedure_record = models.ForeignKey(
+        "procedures.ProcedureRecord",
+        on_delete=models.PROTECT,
+        related_name="stock_movements",
+        null=True,
+        blank=True,
+    )
 
     # Copied from the batch as the units move, so a later correction to a batch
     # cost cannot rewrite the cost of stock already gone.

@@ -19,6 +19,8 @@ export const keys = {
   dispensingQueue: ['pharmacy', 'dispensing'],
   prescription: (id) => ['pharmacy', 'order', id],
   stock: ['pharmacy', 'stock'],
+  procedureWorklist: ['procedures', 'worklist'],
+  procedureOrder: (id) => ['procedures', 'order', id],
   stockItem: (id) => ['pharmacy', 'stock', id],
   till: (term) => ['billing', 'till', term],
   invoice: (id) => ['billing', 'invoice', id],
@@ -244,6 +246,34 @@ export function useWriteOff() {
   return useStockMutation(({ batchId, ...values }) =>
     api.post(`/pharmacy/batches/${batchId}/write-off/`, values),
   )
+}
+
+export function useProcedureWorklist() {
+  return useQuery({
+    queryKey: keys.procedureWorklist,
+    queryFn: () => api.get('/procedures/worklist/'),
+    refetchInterval: QUEUE_REFRESH_MS,
+  })
+}
+
+export function useProcedureOrder(orderId) {
+  return useQuery({
+    queryKey: keys.procedureOrder(orderId),
+    queryFn: () => api.get(`/procedures/orders/${orderId}/`),
+  })
+}
+
+export function usePerformProcedure(orderId) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (values) => api.post(`/procedures/orders/${orderId}/perform/`, values),
+    onSuccess: () => {
+      // The procedure, the shelf it drew on and the visit all move together.
+      queryClient.invalidateQueries({ queryKey: ['procedures'] })
+      queryClient.invalidateQueries({ queryKey: ['pharmacy'] })
+      queryClient.invalidateQueries({ queryKey: ['consultation'] })
+    },
+  })
 }
 
 export function useTill(term) {

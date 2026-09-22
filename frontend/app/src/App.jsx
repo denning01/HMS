@@ -16,6 +16,8 @@ import LabWorklist from './pages/LabWorklist'
 import Login from './pages/Login'
 import PatientDetail from './pages/PatientDetail'
 import Receipt from './pages/Receipt'
+import ProcedureOrder from './pages/ProcedureOrder'
+import ProcedureWorklist from './pages/ProcedureWorklist'
 import Registration from './pages/Registration'
 import Stock from './pages/Stock'
 import StockItem from './pages/StockItem'
@@ -47,6 +49,7 @@ const CLINICAL_RECORD = [...CONSULTING, Role.TRIAGE_NURSE]
 const BILLING = [Role.CASHIER, Role.ADMINISTRATOR, Role.FINANCE_MANAGER]
 const LABORATORY = [Role.LAB_TECHNICIAN, Role.ADMINISTRATOR]
 const PHARMACY = [Role.PHARMACIST, Role.ADMINISTRATOR]
+const PROCEDURES = [Role.PROCEDURE_NURSE, Role.ADMINISTRATOR]
 // Finance answers for the money tied up on the shelf, so it reads stock too.
 const STOCK = [...PHARMACY, Role.FINANCE_MANAGER]
 
@@ -79,6 +82,9 @@ export default function App() {
         <Route path="pharmacy/orders/:orderId" element={<Allow roles={PHARMACY}><DispenseOrder /></Allow>} />
         <Route path="pharmacy/stock" element={<Allow roles={STOCK}><Stock /></Allow>} />
         <Route path="pharmacy/stock/:itemId" element={<Allow roles={STOCK}><StockItem /></Allow>} />
+
+        <Route path="procedures" element={<Allow roles={PROCEDURES}><ProcedureWorklist /></Allow>} />
+        <Route path="procedures/orders/:orderId" element={<Allow roles={PROCEDURES}><ProcedureOrder /></Allow>} />
 
         <Route path="billing" element={<Allow roles={BILLING}><Till /></Allow>} />
         <Route path="billing/invoices/:id" element={<Allow roles={BILLING}><Invoice /></Allow>} />

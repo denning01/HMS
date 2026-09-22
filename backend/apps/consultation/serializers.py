@@ -5,6 +5,7 @@ from rest_framework import serializers
 from apps.laboratory.serializers import LabResultSerializer
 from apps.orders.serializers import OrderSerializer, PlaceOrderSerializer
 from apps.pharmacy.serializers import DirectionsSerializer, PrescriptionSerializer
+from apps.procedures.serializers import ProcedureRecordSerializer
 from apps.patients.serializers import VisitSerializer
 from apps.triage.serializers import VitalsSerializer
 
@@ -106,9 +107,10 @@ class ConsultationOrderSerializer(OrderSerializer):
 
     result = serializers.SerializerMethodField()
     prescription = serializers.SerializerMethodField()
+    procedure = serializers.SerializerMethodField()
 
     class Meta(OrderSerializer.Meta):
-        fields = OrderSerializer.Meta.fields + ["result", "prescription"]
+        fields = OrderSerializer.Meta.fields + ["result", "prescription", "procedure"]
 
     def get_result(self, order):
         result = getattr(order, "lab_result", None)
@@ -119,6 +121,12 @@ class ConsultationOrderSerializer(OrderSerializer):
     def get_prescription(self, order):
         prescription = getattr(order, "prescription", None)
         return PrescriptionSerializer(prescription).data if prescription else None
+
+    def get_procedure(self, order):
+        record = getattr(order, "procedure_record", None)
+        if record is None or not record.is_performed:
+            return None
+        return ProcedureRecordSerializer(record).data
 
 
 class ConsultationOrderRequestSerializer(PlaceOrderSerializer):

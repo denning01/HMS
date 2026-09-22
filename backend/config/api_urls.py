@@ -7,6 +7,7 @@ from apps.billing import api as billing_api
 from apps.consultation import api as consultation_api
 from apps.laboratory import api as laboratory_api
 from apps.pharmacy import api as pharmacy_api
+from apps.procedures import api as procedures_api
 from apps.patients import api as patients_api
 from apps.triage import api as triage_api
 
@@ -42,6 +43,10 @@ urlpatterns = [
     path("pharmacy/stock/<int:pk>/", pharmacy_api.StockItemView.as_view(), name="api_stock_item"),
     path("pharmacy/stock/<int:pk>/receive/", pharmacy_api.ReceiveStockView.as_view(), name="api_receive_stock"),
     path("pharmacy/batches/<int:pk>/write-off/", pharmacy_api.WriteOffView.as_view(), name="api_write_off"),
+
+    path("procedures/worklist/", procedures_api.ProcedureWorklistView.as_view(), name="api_procedure_worklist"),
+    path("procedures/orders/<int:pk>/", procedures_api.ProcedureOrderView.as_view(), name="api_procedure_order"),
+    path("procedures/orders/<int:pk>/perform/", procedures_api.PerformProcedureView.as_view(), name="api_perform_procedure"),
 
     path("billing/services/", billing_api.ServiceListView.as_view(), name="api_services"),
     path("billing/till/", billing_api.TillView.as_view(), name="api_till"),

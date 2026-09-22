@@ -34,6 +34,9 @@ SERVICES = [
     ("PRO-INJ", "Injection administration", Department.PROCEDURE, "200.00"),
     ("PRO-DRESS", "Wound dressing", Department.PROCEDURE, "400.00"),
     ("PRO-SUT", "Suturing (simple)", Department.PROCEDURE, "1500.00"),
+    ("PRO-NEB", "Nebulization", Department.PROCEDURE, "700.00"),
+    ("PRO-IV", "IV fluid administration", Department.PROCEDURE, "900.00"),
+    ("PRO-ID", "Incision and drainage", Department.PROCEDURE, "2000.00"),
 ]
 
 

@@ -59,7 +59,9 @@ export const MODULES = [
   },
   {
     role: Role.PROCEDURE_NURSE,
-    items: [{ label: 'Procedure queue', description: 'Paid procedure orders awaiting action', to: null }],
+    items: [
+      { label: 'Procedure room', description: 'Paid procedure orders awaiting action', to: '/procedures' },
+    ],
   },
   {
     role: Role.CASHIER,
@@ -85,6 +87,7 @@ export const MODULES = [
       { label: 'Consultation', description: 'Patients ready to be seen', to: '/consultation' },
       { label: 'Lab worklist', description: 'Paid test orders awaiting processing', to: '/lab' },
       { label: 'Dispensing', description: 'Paid prescriptions awaiting dispensing', to: '/pharmacy' },
+      { label: 'Procedure room', description: 'Paid procedure orders awaiting action', to: '/procedures' },
       { label: 'Stock', description: 'Stock in, write-offs, low-stock and expiry alerts', to: '/pharmacy/stock' },
       { label: 'Point of sale', description: 'Take payment and issue receipts', to: '/billing' },
       { label: 'Collections', description: 'What was taken today, by department and cashier', to: '/billing/collections' },

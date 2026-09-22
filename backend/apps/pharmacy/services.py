@@ -226,13 +226,21 @@ def dispense(order, *, dispensed_by=None):
 
 
 @transaction.atomic
-def consume(item, *, quantity, note="", recorded_by=None):
-    """Take consumables off the shelf for a procedure. Used from Day 15 onwards."""
+def consume(item, *, quantity, record=None, note="", recorded_by=None):
+    """Take consumables off the shelf for a procedure.
+
+    Same ledger as dispensing, and the same expiry-first order. `record` is the
+    procedure they were used in, which is what lets their cost be attributed to
+    it later without counting them in a second place.
+    """
     batches = list(dispensable_batches(item).select_for_update())
     on_hand = sum(batch.quantity_remaining for batch in batches)
+    if quantity < 1:
+        raise PharmacyError("Recording a consumable takes at least one unit.")
     if on_hand < quantity:
         raise PharmacyError(
-            f"Only {on_hand} {item.unit}s of {item.name} in date on the shelf."
+            f"Only {on_hand} {item.unit}s of {item.name} in date on the shelf, "
+            f"and {quantity} were used."
         )
 
     movements = []
@@ -250,6 +258,7 @@ def consume(item, *, quantity, note="", recorded_by=None):
                 quantity=-taken,
                 reason=MovementReason.CONSUMED,
                 unit_cost=batch.unit_cost,
+                procedure_record=record,
                 note=note,
                 recorded_by=recorded_by,
             )

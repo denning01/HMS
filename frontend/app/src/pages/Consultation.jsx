@@ -256,6 +256,19 @@ function OrdersCard({ visitId, orders, canEdit }) {
                     <span className="mt-0.5 block text-xs text-muted">{order.clinical_details}</span>
                   )}
 
+                  {order.procedure?.notes && (
+                    <p className="mt-2 rounded-lg bg-canvas px-3 py-2 text-sm text-ink">
+                      {order.procedure.notes}
+                      <span className="mt-0.5 block text-xs text-muted">
+                        {order.procedure.performed_by_name} ·{' '}
+                        {new Date(order.procedure.performed_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </p>
+                  )}
+
                   {/* Only released results appear here — the API withholds the rest. */}
                   {order.result && (
                     <p className="mt-2 rounded-lg bg-canvas px-3 py-2 text-sm text-ink">

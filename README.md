@@ -13,7 +13,8 @@ Backend and frontend are separated at the top level; the stack is unchanged.
 ```
 backend/          Django. Serves JSON under /api/ and nothing else.
   apps/           accounts, patients, triage, billing,
-                  orders, consultation, laboratory, pharmacy
+                  orders, consultation, laboratory, pharmacy,
+                  procedures
     */models.py     the records
     */services.py   the operations — every rule that refuses something
     */selectors.py  the reads more than one caller needs
@@ -150,7 +151,10 @@ their name to it.
 
 The pharmacy's is `Prescription` — the directions the drug goes out with — and
 dispensing moves stock off the shelf in the same transaction, so pharmacy sales
-and inventory cannot drift apart.
+and inventory cannot drift apart. The procedure room's is `ProcedureRecord`,
+and the consumables it used are not a list on that record: they are the stock
+movements that came off the shelf for it, which is the same ledger the pharmacy
+keeps.
 
 ```bash
 .venv/bin/python manage.py seed_lab_tests     # specimen types and normal ranges
@@ -190,7 +194,8 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 | 3 | Consultation: the note, orders, closing the visit | Done |
 | 4 | Laboratory: worklist, specimen, result, release | Done |
 | 5 | Pharmacy: prescriptions, dispensing, stock and batches | Done |
-| 6–8 | Procedure room, Appointments | Next |
+| 6 | Procedure room: worklist, procedure done, consumables used | Done |
+| 7–8 | Appointments | Next |
 | 9–10 | Reporting, UAT, go-live | Not started |
 
 ## Tests
