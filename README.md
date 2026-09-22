@@ -109,6 +109,11 @@ than serving with `DEBUG=True`. Override with
 
 ## Roles
 
+The Administrator manages accounts and roles under **Staff and roles**: create an
+account, hold several roles on it at once, set a password Django's own validators
+accept, and withdraw access without deleting anyone — their name is on receipts.
+An administrator cannot remove their own last way in.
+
 The nine roles from the specification are Django Groups, seeded with:
 
 ```bash
@@ -132,9 +137,15 @@ onto a bill. A starting list of 13 items is seeded with:
 ```
 
 It creates only what is missing, so running it on a later deploy will not reset
-prices the clinic has set for itself. Prices are maintained in the admin
-afterwards, and every charge copies the price it was raised at, so changing the
-list never rewrites a bill already issued.
+prices the clinic has set for itself. After that the Administrator maintains the
+list in the app itself, under **Price list**: add a service, change a price,
+retire one. Every charge copies the price it was raised at, so changing the list
+never rewrites a bill already issued, and a service code is set once and never
+changed because the reports and the seeders match on it.
+
+There is no delete anywhere in administration. A service on an issued bill and a
+stock item with movements against it are both part of the record; retiring is
+the way out, and every old receipt still reads correctly.
 
 ## Orders: how the departments hear from the doctor
 
@@ -217,7 +228,8 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 | 6 | Procedure room: worklist, procedure done, consumables used | Done |
 | 7 | Appointments: the diary, arrivals and follow-ups | Done |
 | 8 | Reporting: revenue, cost and profit over a period | Done |
-| 9–10 | Admin screens, UAT, go-live | Next |
+| 9 | Administration: price list, stock list, staff and roles | Done |
+| 10 | UAT and go-live | Next |
 | 9–10 | Reporting, UAT, go-live | Not started |
 
 ## Tests

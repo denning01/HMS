@@ -178,3 +178,28 @@ class WriteOffView(APIView):
             return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
 
         return Response(StockMovementSerializer(movement).data, status=status.HTTP_201_CREATED)
+
+
+# --- the stock list, as the administrator and the pharmacist maintain it ----
+
+
+class StockItemAdminListView(generics.ListCreateAPIView):
+    """Every item the clinic counts, retired ones included, and a way to add one."""
+
+    permission_classes = [HasAnyRole]
+    roles = PHARMACY_ROLES
+    serializer_class = StockItemSerializer
+    queryset = StockItem.objects.select_related("service").order_by("name")
+
+
+class StockItemAdminDetailView(generics.RetrieveUpdateAPIView):
+    """Change what an item is called, what one unit means, or when to reorder.
+
+    No delete: an item with movements against it is part of the ledger, and the
+    way out is `is_active`, exactly as it is for a priced service.
+    """
+
+    permission_classes = [HasAnyRole]
+    roles = PHARMACY_ROLES
+    serializer_class = StockItemSerializer
+    queryset = StockItem.objects.select_related("service")

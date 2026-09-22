@@ -17,6 +17,33 @@ class ServiceSerializer(serializers.ModelSerializer):
         fields = ["id", "code", "name", "department", "department_display", "unit_price"]
 
 
+class ServiceAdminSerializer(ServiceSerializer):
+    """The price list as the administrator maintains it.
+
+    The code is set once and never changed: bills already issued keep their own
+    copy of the description and price, but the code is what reports and the
+    seeders match on, and renaming it would quietly orphan both.
+    """
+
+    class Meta(ServiceSerializer.Meta):
+        fields = ServiceSerializer.Meta.fields + ["is_active", "updated_at"]
+        read_only_fields = ["updated_at"]
+
+    def get_fields(self):
+        fields = super().get_fields()
+        if self.instance is not None:
+            fields["code"].read_only = True
+        return fields
+
+    def validate_code(self, value):
+        return value.strip().upper()
+
+    def validate_unit_price(self, value):
+        if value < 0:
+            raise serializers.ValidationError("A price cannot be negative.")
+        return value
+
+
 class InvoiceLineSerializer(serializers.ModelSerializer):
     line_total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     department = serializers.CharField(read_only=True)

@@ -57,6 +57,10 @@ async function request(path, { method = 'GET', body, signal } = {}) {
 export const api = {
   get: (path, options) => request(path, options),
   post: (path, body, options) => request(path, { ...options, method: 'POST', body }),
+  // Administration edits one field at a time — a price, a reorder level, a set
+  // of roles — so they are sent as a patch rather than a whole record the
+  // screen would have to hold and could overwrite from stale state.
+  patch: (path, body, options) => request(path, { ...options, method: 'PATCH', body }),
 
   /** Called once on boot so the first POST of the session has a CSRF token. */
   primeCsrf: () => request('/auth/csrf/'),

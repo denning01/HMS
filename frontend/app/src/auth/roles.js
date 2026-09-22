@@ -55,6 +55,7 @@ export const MODULES = [
     items: [
       { label: 'Dispensing', description: 'Paid prescriptions awaiting dispensing', to: '/pharmacy' },
       { label: 'Stock', description: 'Stock in, write-offs, low-stock and expiry alerts', to: '/pharmacy/stock' },
+      { label: 'Stock list', description: 'What the clinic counts, and when to reorder', to: '/settings/stock-list' },
     ],
   },
   {
@@ -82,7 +83,7 @@ export const MODULES = [
   {
     role: Role.ADMINISTRATOR,
     items: [
-      { label: 'Users & roles', description: 'Create staff accounts and assign roles', to: '/admin/' },
+      { label: 'Staff and roles', description: 'Create accounts and assign roles', to: '/settings/staff' },
       { label: 'Registration', description: 'Find or register a patient and start a visit', to: '/registration' },
       { label: 'Appointments', description: 'Book, confirm and track upcoming visits', to: '/appointments' },
       { label: 'Consultation', description: 'Patients ready to be seen', to: '/consultation' },
@@ -93,7 +94,8 @@ export const MODULES = [
       { label: 'Point of sale', description: 'Take payment and issue receipts', to: '/billing' },
       { label: 'Collections', description: 'What was taken today, by department and cashier', to: '/billing/collections' },
       { label: 'Revenue and profit', description: 'Takings against the stock they used', to: '/reports' },
-      { label: 'Price lists', description: 'Consultation, test, drug and procedure pricing', to: '/admin/billing/service/' },
+      { label: 'Price list', description: 'Consultation, test, drug and procedure pricing', to: '/settings/price-list' },
+      { label: 'Stock list', description: 'What the clinic counts, and when to reorder', to: '/settings/stock-list' },
     ],
   },
 ]

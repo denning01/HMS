@@ -19,10 +19,13 @@ import PatientDetail from './pages/PatientDetail'
 import Receipt from './pages/Receipt'
 import ProcedureOrder from './pages/ProcedureOrder'
 import ProcedureWorklist from './pages/ProcedureWorklist'
+import PriceList from './pages/PriceList'
 import Registration from './pages/Registration'
 import Reports from './pages/Reports'
+import Staff from './pages/Staff'
 import Stock from './pages/Stock'
 import StockItem from './pages/StockItem'
+import StockList from './pages/StockList'
 import Till from './pages/Till'
 import TriageQueue from './pages/TriageQueue'
 import Vitals from './pages/Vitals'
@@ -58,6 +61,8 @@ const PROCEDURES = [Role.PROCEDURE_NURSE, Role.ADMINISTRATOR]
 const STOCK = [...PHARMACY, Role.FINANCE_MANAGER]
 // Profit is the owner's figure; the cashier reconciles their day in Collections.
 const FINANCE = [Role.FINANCE_MANAGER, Role.ADMINISTRATOR]
+// Pricing and accounts are the Administrator's alone, as the matrix has it.
+const ADMIN = [Role.ADMINISTRATOR]
 
 export default function App() {
   const { user, ready } = useAuth()
@@ -97,6 +102,10 @@ export default function App() {
         <Route path="billing" element={<Allow roles={BILLING}><Till /></Allow>} />
         <Route path="billing/invoices/:id" element={<Allow roles={BILLING}><Invoice /></Allow>} />
         <Route path="billing/receipts/:id" element={<Allow roles={BILLING}><Receipt /></Allow>} />
+        <Route path="settings/price-list" element={<Allow roles={ADMIN}><PriceList /></Allow>} />
+        <Route path="settings/stock-list" element={<Allow roles={PHARMACY}><StockList /></Allow>} />
+        <Route path="settings/staff" element={<Allow roles={ADMIN}><Staff /></Allow>} />
+
         <Route path="reports" element={<Allow roles={FINANCE}><Reports /></Allow>} />
         <Route path="billing/collections" element={<Allow roles={BILLING}><Collections /></Allow>} />
 

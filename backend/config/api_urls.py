@@ -56,6 +56,14 @@ urlpatterns = [
     path("procedures/orders/<int:pk>/", procedures_api.ProcedureOrderView.as_view(), name="api_procedure_order"),
     path("procedures/orders/<int:pk>/perform/", procedures_api.PerformProcedureView.as_view(), name="api_perform_procedure"),
 
+    path("admin/services/", billing_api.ServiceAdminListView.as_view(), name="api_admin_services"),
+    path("admin/services/<int:pk>/", billing_api.ServiceAdminDetailView.as_view(), name="api_admin_service"),
+    path("admin/stock-items/", pharmacy_api.StockItemAdminListView.as_view(), name="api_admin_stock_items"),
+    path("admin/stock-items/<int:pk>/", pharmacy_api.StockItemAdminDetailView.as_view(), name="api_admin_stock_item"),
+    path("admin/staff/", accounts_api.StaffListView.as_view(), name="api_staff"),
+    path("admin/staff/<int:pk>/", accounts_api.StaffDetailView.as_view(), name="api_staff_detail"),
+    path("admin/staff/<int:pk>/password/", accounts_api.ResetPasswordView.as_view(), name="api_staff_password"),
+
     path("billing/services/", billing_api.ServiceListView.as_view(), name="api_services"),
     path("billing/till/", billing_api.TillView.as_view(), name="api_till"),
     path("billing/invoices/<int:pk>/", billing_api.InvoiceDetailView.as_view(), name="api_invoice"),

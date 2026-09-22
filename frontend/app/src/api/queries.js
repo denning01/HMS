@@ -28,6 +28,9 @@ export const keys = {
   receipt: (id) => ['billing', 'receipt', id],
   collections: (day) => ['billing', 'collections', day],
   revenue: (from, to) => ['reports', 'revenue', from, to],
+  adminServices: (department) => ['admin', 'services', department],
+  adminStockItems: ['admin', 'stock-items'],
+  staff: (term) => ['admin', 'staff', term],
 }
 
 // A queue on a wall-mounted screen must not go stale while nobody touches it.
@@ -366,3 +369,71 @@ export function useCollections(day) {
     queryFn: () => api.get(`/billing/collections/${day ? `?day=${day}` : ''}`),
   })
 }
+
+
+/* --- administration ------------------------------------------------------ */
+
+export function useAdminServices(department = '') {
+  return useQuery({
+    queryKey: keys.adminServices(department),
+    queryFn: () =>
+      api.get(`/admin/services/${department ? `?department=${encodeURIComponent(department)}` : ''}`),
+    placeholderData: (previous) => previous,
+  })
+}
+
+/** A price change touches every screen that orders from the catalogue. */
+function useCatalogueMutation(mutationFn) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin'] })
+      queryClient.invalidateQueries({ queryKey: ['billing'] })
+      queryClient.invalidateQueries({ queryKey: ['pharmacy'] })
+    },
+  })
+}
+
+export const useCreateService = () =>
+  useCatalogueMutation((values) => api.post('/admin/services/', values))
+
+export const useUpdateService = () =>
+  useCatalogueMutation(({ id, ...values }) => api.patch(`/admin/services/${id}/`, values))
+
+export function useAdminStockItems() {
+  return useQuery({
+    queryKey: keys.adminStockItems,
+    queryFn: () => api.get('/admin/stock-items/'),
+  })
+}
+
+export const useCreateStockItem = () =>
+  useCatalogueMutation((values) => api.post('/admin/stock-items/', values))
+
+export const useUpdateStockItem = () =>
+  useCatalogueMutation(({ id, ...values }) => api.patch(`/admin/stock-items/${id}/`, values))
+
+export function useStaff(term = '') {
+  return useQuery({
+    queryKey: keys.staff(term),
+    queryFn: () => api.get(`/admin/staff/${term ? `?q=${encodeURIComponent(term)}` : ''}`),
+    placeholderData: (previous) => previous,
+  })
+}
+
+function useStaffMutation(mutationFn) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'staff'] }),
+  })
+}
+
+export const useCreateStaff = () => useStaffMutation((values) => api.post('/admin/staff/', values))
+
+export const useUpdateStaff = () =>
+  useStaffMutation(({ id, ...values }) => api.patch(`/admin/staff/${id}/`, values))
+
+export const useResetPassword = () =>
+  useStaffMutation(({ id, password }) => api.post(`/admin/staff/${id}/password/`, { password }))

@@ -14,6 +14,7 @@ from . import reports
 from .models import Department, Invoice, Payment, PaymentMethod, Service
 from .serializers import (
     InvoiceSerializer,
+    ServiceAdminSerializer,
     InvoiceSummarySerializer,
     PaymentSerializer,
     ReceiptSerializer,
@@ -21,6 +22,8 @@ from .serializers import (
     TakePaymentSerializer,
 )
 from .services import BillingError, take_payment
+from apps.accounts.models import Role
+
 from .roles import (
     CATALOGUE_ROLES,
     REPORT_ROLES,
@@ -178,3 +181,41 @@ class CollectionsView(APIView):
                 ],
             }
         )
+
+
+# --- the price list, as the administrator maintains it ----------------------
+
+# Pricing changes stay with the Administrator, so they are auditable to one
+# person rather than to whoever was on the desk.
+PRICE_LIST_ROLES = (Role.ADMINISTRATOR,)
+
+
+class ServiceAdminListView(generics.ListCreateAPIView):
+    """Every service, retired ones included, and a way to add one."""
+
+    permission_classes = [HasAnyRole]
+    roles = PRICE_LIST_ROLES
+    serializer_class = ServiceAdminSerializer
+
+    def get_queryset(self):
+        services = Service.objects.all()
+
+        department = self.request.query_params.get("department", "").strip()
+        if department in Department.values:
+            services = services.filter(department=department)
+
+        return services.order_by("department", "name")
+
+
+class ServiceAdminDetailView(generics.RetrieveUpdateAPIView):
+    """Change a price, rename a service, or retire it.
+
+    There is no delete. A service on an issued bill cannot be removed without
+    taking the bill's meaning with it, so retiring is the only way out — the
+    catalogue stops offering it and every old receipt still reads correctly.
+    """
+
+    permission_classes = [HasAnyRole]
+    roles = PRICE_LIST_ROLES
+    serializer_class = ServiceAdminSerializer
+    queryset = Service.objects.all()
