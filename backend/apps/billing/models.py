@@ -217,6 +217,22 @@ class InvoiceLine(models.Model):
         return self.status == LineStatus.PAID
 
 
+def cleared_lines_q(prefix=""):
+    """`InvoiceLine.is_cleared` as a queryset filter, kept beside it so the two
+    cannot drift apart.
+
+    The departmental worklists ask "what may I act on?" of hundreds of rows at a
+    time, which has to be one query rather than a property evaluated per row.
+    `prefix` is the path to the line from whatever is being filtered — the
+    orders worklist passes "invoice_line".
+    """
+    p = f"{prefix}__" if prefix else ""
+    return ~models.Q(**{f"{p}status": LineStatus.CANCELLED}) & (
+        models.Q(**{f"{p}invoice__visit__billing_mode": BillingMode.CONSOLIDATED})
+        | models.Q(**{f"{p}status": LineStatus.PAID})
+    )
+
+
 class Payment(models.Model):
     """Money received against a bill, and the receipt it produced."""
 

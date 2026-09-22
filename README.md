@@ -148,7 +148,8 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 | 1 | Registration, Triage | Done |
 | 2 | Billing: price list, bills, payment, collections | Done |
 | — | JSON API + React client (replaced the server-rendered screens) | Done |
-| 3–8 | Consultation, Lab, Pharmacy, Procedure, Appointments | Next |
+| 3 | Consultation: the note, orders, closing the visit | Done |
+| 4–8 | Lab, Pharmacy, Procedure, Appointments | Next |
 | 9–10 | Reporting, UAT, go-live | Not started |
 
 ## Tests

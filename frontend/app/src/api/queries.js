@@ -11,6 +11,9 @@ export const keys = {
   patient: (id) => ['patients', id],
   triageQueue: ['triage', 'queue'],
   visitVitals: (id) => ['triage', id, 'vitals'],
+  consultationQueue: ['consultation', 'queue'],
+  consultationRecord: (visitId) => ['consultation', visitId],
+  services: (department) => ['billing', 'services', department],
   till: (term) => ['billing', 'till', term],
   invoice: (id) => ['billing', 'invoice', id],
   receipt: (id) => ['billing', 'receipt', id],
@@ -81,6 +84,70 @@ export function useRecordVitals(visitId) {
       queryClient.invalidateQueries({ queryKey: ['billing'] })
     },
   })
+}
+
+export function useConsultationQueue() {
+  return useQuery({
+    queryKey: keys.consultationQueue,
+    queryFn: () => api.get('/consultation/queue/'),
+    refetchInterval: QUEUE_REFRESH_MS,
+  })
+}
+
+export function useConsultationRecord(visitId) {
+  return useQuery({
+    queryKey: keys.consultationRecord(visitId),
+    queryFn: () => api.get(`/consultation/${visitId}/`),
+    // The doctor keeps this screen open while the patient goes to the till and
+    // on to the lab, so payment and results have to arrive without a reload.
+    refetchInterval: QUEUE_REFRESH_MS,
+  })
+}
+
+/** The price list a department orders from. Prices are never typed on a screen. */
+export function useServices(department) {
+  return useQuery({
+    queryKey: keys.services(department),
+    queryFn: () => api.get(`/billing/services/?department=${encodeURIComponent(department)}`),
+    enabled: Boolean(department),
+    // A price list changes a few times a year, not a few times an hour.
+    staleTime: 10 * 60_000,
+  })
+}
+
+/** Everything the consulting room writes moves the same three things. */
+function useConsultationMutation(visitId, mutationFn) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.consultationRecord(visitId) })
+      queryClient.invalidateQueries({ queryKey: keys.consultationQueue })
+      queryClient.invalidateQueries({ queryKey: ['billing'] })
+    },
+  })
+}
+
+export function useSaveNote(visitId) {
+  return useConsultationMutation(visitId, (values) =>
+    api.post(`/consultation/${visitId}/`, values),
+  )
+}
+
+export function usePlaceOrder(visitId) {
+  return useConsultationMutation(visitId, (values) =>
+    api.post(`/consultation/${visitId}/orders/`, values),
+  )
+}
+
+export function useCancelOrder(visitId) {
+  return useConsultationMutation(visitId, (orderId) =>
+    api.post(`/orders/${orderId}/cancel/`, {}),
+  )
+}
+
+export function useCloseVisit(visitId) {
+  return useConsultationMutation(visitId, () => api.post(`/consultation/${visitId}/close/`, {}))
 }
 
 export function useTill(term) {

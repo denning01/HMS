@@ -28,12 +28,15 @@ export const MODULES = [
   },
   {
     role: Role.TRIAGE_NURSE,
-    items: [{ label: 'Triage queue', description: 'Patients waiting for vitals', to: '/triage' }],
+    items: [
+      { label: 'Triage queue', description: 'Patients waiting for vitals', to: '/triage' },
+      { label: 'Clinical records', description: 'Read back a visit you took vitals for', to: '/consultation' },
+    ],
   },
   {
     role: Role.DOCTOR,
     items: [
-      { label: 'Consultation queue', description: 'Patients ready to be seen', to: null },
+      { label: 'Consultation', description: 'Patients ready to be seen', to: '/consultation' },
       { label: 'Results', description: 'Lab results returned for review', to: null },
     ],
   },
@@ -75,6 +78,7 @@ export const MODULES = [
     items: [
       { label: 'Users & roles', description: 'Create staff accounts and assign roles', to: '/admin/' },
       { label: 'Registration', description: 'Find or register a patient and start a visit', to: '/registration' },
+      { label: 'Consultation', description: 'Patients ready to be seen', to: '/consultation' },
       { label: 'Point of sale', description: 'Take payment and issue receipts', to: '/billing' },
       { label: 'Collections', description: 'What was taken today, by department and cashier', to: '/billing/collections' },
       { label: 'Price lists', description: 'Consultation, test, drug and procedure pricing', to: '/admin/billing/service/' },

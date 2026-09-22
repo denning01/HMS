@@ -5,6 +5,8 @@ import Layout from './components/Layout'
 import { Alert, Loading } from './components/ui'
 
 import Collections from './pages/Collections'
+import Consultation from './pages/Consultation'
+import ConsultationQueue from './pages/ConsultationQueue'
 import Dashboard from './pages/Dashboard'
 import Invoice from './pages/Invoice'
 import Login from './pages/Login'
@@ -33,6 +35,9 @@ function Allow({ roles, children }) {
 const REGISTRATION = [Role.RECEPTIONIST, Role.ADMINISTRATOR]
 const RECORDS = [...REGISTRATION, Role.TRIAGE_NURSE, Role.DOCTOR, Role.CASHIER]
 const TRIAGE = [Role.TRIAGE_NURSE, Role.ADMINISTRATOR]
+const CONSULTING = [Role.DOCTOR, Role.ADMINISTRATOR]
+// The nurse who took the vitals may read the record back; writing is the doctor's.
+const CLINICAL_RECORD = [...CONSULTING, Role.TRIAGE_NURSE]
 const BILLING = [Role.CASHIER, Role.ADMINISTRATOR, Role.FINANCE_MANAGER]
 
 export default function App() {
@@ -53,6 +58,9 @@ export default function App() {
 
         <Route path="triage" element={<Allow roles={TRIAGE}><TriageQueue /></Allow>} />
         <Route path="triage/:visitId" element={<Allow roles={TRIAGE}><Vitals /></Allow>} />
+
+        <Route path="consultation" element={<Allow roles={CLINICAL_RECORD}><ConsultationQueue /></Allow>} />
+        <Route path="consultation/:visitId" element={<Allow roles={CLINICAL_RECORD}><Consultation /></Allow>} />
 
         <Route path="billing" element={<Allow roles={BILLING}><Till /></Allow>} />
         <Route path="billing/invoices/:id" element={<Allow roles={BILLING}><Invoice /></Allow>} />

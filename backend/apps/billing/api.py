@@ -7,21 +7,49 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.models import Role
 from apps.accounts.permissions import HasAnyRole, user_has_any_role
 from apps.patients.models import OPEN_VISIT_STATUSES
 
 from . import reports
-from .models import Invoice, Payment, PaymentMethod
+from .models import Department, Invoice, Payment, PaymentMethod, Service
 from .serializers import (
     InvoiceSerializer,
     InvoiceSummarySerializer,
     PaymentSerializer,
     ReceiptSerializer,
+    ServiceSerializer,
     TakePaymentSerializer,
 )
 from .services import BillingError, take_payment
-from .roles import REPORT_ROLES, SEARCH_RESULT_LIMIT, TILL_ROLES, VIEW_ROLES
+from .roles import (
+    CATALOGUE_ROLES,
+    REPORT_ROLES,
+    SEARCH_RESULT_LIMIT,
+    TILL_ROLES,
+    VIEW_ROLES,
+)
+
+
+class ServiceListView(generics.ListAPIView):
+    """The price list, for the screens that order from it.
+
+    Active services only: a retired one still has to read correctly on an old
+    bill, but nobody should be able to order it again. Filter by department, and
+    the doctor's order picker asks for one department at a time.
+    """
+
+    permission_classes = [HasAnyRole]
+    roles = CATALOGUE_ROLES
+    serializer_class = ServiceSerializer
+
+    def get_queryset(self):
+        queryset = Service.objects.filter(is_active=True)
+
+        department = self.request.query_params.get("department", "").strip()
+        if department in Department.values:
+            queryset = queryset.filter(department=department)
+
+        return queryset.order_by("department", "name")
 
 
 class TillView(APIView):
