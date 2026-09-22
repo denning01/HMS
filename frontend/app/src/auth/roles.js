@@ -23,7 +23,7 @@ export const MODULES = [
     role: Role.RECEPTIONIST,
     items: [
       { label: 'Registration', description: 'Find or register a patient and start a visit', to: '/registration' },
-      { label: 'Appointments', description: 'Book, confirm and track upcoming visits', to: null },
+      { label: 'Appointments', description: 'Book, confirm and track upcoming visits', to: '/appointments' },
     ],
   },
   {
@@ -84,6 +84,7 @@ export const MODULES = [
     items: [
       { label: 'Users & roles', description: 'Create staff accounts and assign roles', to: '/admin/' },
       { label: 'Registration', description: 'Find or register a patient and start a visit', to: '/registration' },
+      { label: 'Appointments', description: 'Book, confirm and track upcoming visits', to: '/appointments' },
       { label: 'Consultation', description: 'Patients ready to be seen', to: '/consultation' },
       { label: 'Lab worklist', description: 'Paid test orders awaiting processing', to: '/lab' },
       { label: 'Dispensing', description: 'Paid prescriptions awaiting dispensing', to: '/pharmacy' },

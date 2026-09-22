@@ -14,6 +14,7 @@ export const keys = {
   consultationQueue: ['consultation', 'queue'],
   consultationRecord: (visitId) => ['consultation', visitId],
   services: (department) => ['billing', 'services', department],
+  appointments: (day, term) => ['appointments', day, term],
   labWorklist: ['lab', 'worklist'],
   labOrder: (id) => ['lab', 'order', id],
   dispensingQueue: ['pharmacy', 'dispensing'],
@@ -89,6 +90,41 @@ export function useRecordVitals(visitId) {
     mutationFn: (values) => api.post(`/triage/${visitId}/vitals/`, values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: keys.triageQueue })
+      queryClient.invalidateQueries({ queryKey: ['billing'] })
+    },
+  })
+}
+
+export function useAppointments(day, term = '') {
+  return useQuery({
+    queryKey: keys.appointments(day, term),
+    queryFn: () => {
+      const query = new URLSearchParams()
+      if (day) query.set('day', day)
+      if (term) query.set('q', term)
+      return api.get(`/appointments/${query.size ? `?${query}` : ''}`)
+    },
+    placeholderData: (previous) => previous,
+  })
+}
+
+export function useBookAppointment() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (values) => api.post('/appointments/', values),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['appointments'] }),
+  })
+}
+
+/** Confirm, cancel, no-show and arrive are one shape, so they are one hook. */
+export function useAppointmentAction(action) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...values }) => api.post(`/appointments/${id}/${action}/`, values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      // Arriving opens a visit, which puts the patient on two other queues.
+      queryClient.invalidateQueries({ queryKey: ['triage'] })
       queryClient.invalidateQueries({ queryKey: ['billing'] })
     },
   })

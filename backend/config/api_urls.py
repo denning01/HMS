@@ -3,6 +3,7 @@
 from django.urls import path
 
 from apps.accounts import api as accounts_api
+from apps.appointments import api as appointments_api
 from apps.billing import api as billing_api
 from apps.consultation import api as consultation_api
 from apps.laboratory import api as laboratory_api
@@ -20,6 +21,12 @@ urlpatterns = [
     path("patients/", patients_api.PatientListView.as_view(), name="api_patients"),
     path("patients/<int:pk>/", patients_api.PatientDetailView.as_view(), name="api_patient"),
     path("patients/<int:pk>/start-visit/", patients_api.StartVisitView.as_view(), name="api_start_visit"),
+
+    path("appointments/", appointments_api.AppointmentListView.as_view(), name="api_appointments"),
+    path("appointments/<int:pk>/confirm/", appointments_api.ConfirmAppointmentView.as_view(), name="api_confirm_appointment"),
+    path("appointments/<int:pk>/cancel/", appointments_api.CancelAppointmentView.as_view(), name="api_cancel_appointment"),
+    path("appointments/<int:pk>/no-show/", appointments_api.NoShowAppointmentView.as_view(), name="api_no_show_appointment"),
+    path("appointments/<int:pk>/arrive/", appointments_api.ArriveAppointmentView.as_view(), name="api_arrive_appointment"),
 
     path("triage/queue/", triage_api.TriageQueueView.as_view(), name="api_triage_queue"),
     path("triage/<int:visit_id>/vitals/", triage_api.VitalsView.as_view(), name="api_vitals"),

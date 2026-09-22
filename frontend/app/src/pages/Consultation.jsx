@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
+  useBookAppointment,
   useCancelOrder,
   useCloseVisit,
   useConsultationRecord,
@@ -312,6 +313,78 @@ function OrdersCard({ visitId, orders, canEdit }) {
   )
 }
 
+/* --- follow-up ---------------------------------------------------------- */
+
+/**
+ * The last step of a visit, where the doctor asks for one: booked from here
+ * rather than sent to the front desk with a note the patient has to relay.
+ */
+function FollowUpCard({ patientId }) {
+  const book = useBookAppointment()
+  const [when, setWhen] = useState('')
+  const [reason, setReason] = useState('')
+  const [booked, setBooked] = useState(null)
+
+  async function submit(event) {
+    event.preventDefault()
+    const appointment = await book
+      .mutateAsync({
+        patient: patientId,
+        scheduled_for: new Date(when).toISOString(),
+        department: 'consultation',
+        reason,
+      })
+      .catch(() => null)
+
+    if (appointment) {
+      setBooked(appointment.scheduled_for)
+      setWhen('')
+      setReason('')
+    }
+  }
+
+  return (
+    <form onSubmit={submit}>
+      <Card title="Follow-up">
+        <div className="p-4">
+          <Alert>{book.error?.message}</Alert>
+          {booked && (
+            <Alert tone="good">
+              Booked for{' '}
+              {new Date(booked).toLocaleString([], {
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+              .
+            </Alert>
+          )}
+
+          <div className="grid items-end gap-3 sm:grid-cols-3">
+            <Field label="Date and time">
+              <Input
+                type="datetime-local"
+                value={when}
+                onChange={(event) => setWhen(event.target.value)}
+              />
+            </Field>
+            <Field label="Reason" className="sm:col-span-2" hint="What the review is for">
+              <Input value={reason} onChange={(event) => setReason(event.target.value)} />
+            </Field>
+          </div>
+        </div>
+
+        <footer className="flex justify-end border-t border-line px-4 py-3">
+          <Button type="submit" disabled={!when || book.isPending}>
+            {book.isPending ? 'Booking…' : 'Book the follow-up'}
+          </Button>
+        </footer>
+      </Card>
+    </form>
+  )
+}
+
 /* --- the screen --------------------------------------------------------- */
 
 export default function Consultation() {
@@ -433,6 +506,8 @@ export default function Consultation() {
           orders={record?.orders ?? []}
           canEdit={Boolean(record?.can_edit && visit?.is_open)}
         />
+
+        {record?.can_edit && visit?.is_open && <FollowUpCard patientId={visit.patient.id} />}
 
         <Card title="This visit's bill">
           {record?.invoice ? (

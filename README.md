@@ -14,7 +14,7 @@ Backend and frontend are separated at the top level; the stack is unchanged.
 backend/          Django. Serves JSON under /api/ and nothing else.
   apps/           accounts, patients, triage, billing,
                   orders, consultation, laboratory, pharmacy,
-                  procedures
+                  procedures, appointments
     */models.py     the records
     */services.py   the operations — every rule that refuses something
     */selectors.py  the reads more than one caller needs
@@ -195,7 +195,8 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 | 4 | Laboratory: worklist, specimen, result, release | Done |
 | 5 | Pharmacy: prescriptions, dispensing, stock and batches | Done |
 | 6 | Procedure room: worklist, procedure done, consumables used | Done |
-| 7–8 | Appointments | Next |
+| 7 | Appointments: the diary, arrivals and follow-ups | Done |
+| 8–10 | Reporting, admin screens, UAT, go-live | Next |
 | 9–10 | Reporting, UAT, go-live | Not started |
 
 ## Tests

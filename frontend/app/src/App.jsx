@@ -4,6 +4,7 @@ import { Role } from './auth/roles'
 import Layout from './components/Layout'
 import { Alert, Loading } from './components/ui'
 
+import Appointments from './pages/Appointments'
 import Collections from './pages/Collections'
 import Consultation from './pages/Consultation'
 import ConsultationQueue from './pages/ConsultationQueue'
@@ -44,6 +45,8 @@ const REGISTRATION = [Role.RECEPTIONIST, Role.ADMINISTRATOR]
 const RECORDS = [...REGISTRATION, Role.TRIAGE_NURSE, Role.DOCTOR, Role.CASHIER]
 const TRIAGE = [Role.TRIAGE_NURSE, Role.ADMINISTRATOR]
 const CONSULTING = [Role.DOCTOR, Role.ADMINISTRATOR]
+// The doctor books the follow-up they asked for; the desk runs everything else.
+const DIARY = [Role.RECEPTIONIST, Role.ADMINISTRATOR, Role.DOCTOR]
 // The nurse who took the vitals may read the record back; writing is the doctor's.
 const CLINICAL_RECORD = [...CONSULTING, Role.TRIAGE_NURSE]
 const BILLING = [Role.CASHIER, Role.ADMINISTRATOR, Role.FINANCE_MANAGER]
@@ -68,6 +71,8 @@ export default function App() {
 
         <Route path="registration" element={<Allow roles={REGISTRATION}><Registration /></Allow>} />
         <Route path="patients/:id" element={<Allow roles={RECORDS}><PatientDetail /></Allow>} />
+
+        <Route path="appointments" element={<Allow roles={DIARY}><Appointments /></Allow>} />
 
         <Route path="triage" element={<Allow roles={TRIAGE}><TriageQueue /></Allow>} />
         <Route path="triage/:visitId" element={<Allow roles={TRIAGE}><Vitals /></Allow>} />
