@@ -36,14 +36,17 @@ export const MODULES = [
   {
     role: Role.DOCTOR,
     items: [
-      { label: 'Consultation', description: 'Patients ready to be seen', to: '/consultation' },
-      { label: 'Results', description: 'Lab results returned for review', to: null },
+      {
+        label: 'Consultation',
+        description: 'Patients waiting to be seen, and results returned for review',
+        to: '/consultation',
+      },
     ],
   },
   {
     role: Role.LAB_TECHNICIAN,
     items: [
-      { label: 'Lab worklist', description: 'Paid test orders awaiting processing', to: null },
+      { label: 'Lab worklist', description: 'Paid test orders awaiting processing', to: '/lab' },
       { label: 'Test catalogue', description: 'Available tests and sample types', to: null },
     ],
   },
@@ -79,6 +82,7 @@ export const MODULES = [
       { label: 'Users & roles', description: 'Create staff accounts and assign roles', to: '/admin/' },
       { label: 'Registration', description: 'Find or register a patient and start a visit', to: '/registration' },
       { label: 'Consultation', description: 'Patients ready to be seen', to: '/consultation' },
+      { label: 'Lab worklist', description: 'Paid test orders awaiting processing', to: '/lab' },
       { label: 'Point of sale', description: 'Take payment and issue receipts', to: '/billing' },
       { label: 'Collections', description: 'What was taken today, by department and cashier', to: '/billing/collections' },
       { label: 'Price lists', description: 'Consultation, test, drug and procedure pricing', to: '/admin/billing/service/' },

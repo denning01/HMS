@@ -9,6 +9,8 @@ import Consultation from './pages/Consultation'
 import ConsultationQueue from './pages/ConsultationQueue'
 import Dashboard from './pages/Dashboard'
 import Invoice from './pages/Invoice'
+import LabOrder from './pages/LabOrder'
+import LabWorklist from './pages/LabWorklist'
 import Login from './pages/Login'
 import PatientDetail from './pages/PatientDetail'
 import Receipt from './pages/Receipt'
@@ -39,6 +41,7 @@ const CONSULTING = [Role.DOCTOR, Role.ADMINISTRATOR]
 // The nurse who took the vitals may read the record back; writing is the doctor's.
 const CLINICAL_RECORD = [...CONSULTING, Role.TRIAGE_NURSE]
 const BILLING = [Role.CASHIER, Role.ADMINISTRATOR, Role.FINANCE_MANAGER]
+const LABORATORY = [Role.LAB_TECHNICIAN, Role.ADMINISTRATOR]
 
 export default function App() {
   const { user, ready } = useAuth()
@@ -61,6 +64,9 @@ export default function App() {
 
         <Route path="consultation" element={<Allow roles={CLINICAL_RECORD}><ConsultationQueue /></Allow>} />
         <Route path="consultation/:visitId" element={<Allow roles={CLINICAL_RECORD}><Consultation /></Allow>} />
+
+        <Route path="lab" element={<Allow roles={LABORATORY}><LabWorklist /></Allow>} />
+        <Route path="lab/orders/:orderId" element={<Allow roles={LABORATORY}><LabOrder /></Allow>} />
 
         <Route path="billing" element={<Allow roles={BILLING}><Till /></Allow>} />
         <Route path="billing/invoices/:id" element={<Allow roles={BILLING}><Invoice /></Allow>} />

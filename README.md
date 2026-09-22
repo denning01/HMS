@@ -12,9 +12,11 @@ Backend and frontend are separated at the top level; the stack is unchanged.
 
 ```
 backend/          Django. Serves JSON under /api/ and nothing else.
-  apps/           accounts, patients, triage, billing
+  apps/           accounts, patients, triage, billing,
+                  orders, consultation, laboratory
     */models.py     the records
-    */services.py   the operations (billing only, so far)
+    */services.py   the operations — every rule that refuses something
+    */selectors.py  the reads more than one caller needs
     */serializers.py + api.py   the JSON surface
   config/         settings/, urls.py, api_urls.py, wsgi.py, asgi.py
 frontend/app/     React client
@@ -133,6 +135,26 @@ prices the clinic has set for itself. Prices are maintained in the admin
 afterwards, and every charge copies the price it was raised at, so changing the
 list never rewrites a bill already issued.
 
+## Orders: how the departments hear from the doctor
+
+Everything the doctor asks another department to do is one `Order` and one
+charge on the visit's bill, created together. Laboratory, Pharmacy and the
+Procedure room all ask the same question before acting — has billing cleared
+this? — so they share one record and get one answer rather than three.
+
+Each department attaches its own record to the order as the module is built.
+The laboratory's is `LabResult`: the specimen, the findings, and the three
+stamps the specification asks for — collected, recorded, released. A result is
+invisible to the doctor until it is released, because until then nobody has put
+their name to it.
+
+```bash
+.venv/bin/python manage.py seed_lab_tests   # specimen types and normal ranges
+```
+
+Idempotent, and it never overwrites: a reference range the clinic has corrected
+in the admin survives the next deploy.
+
 ## How billing gates the departments
 
 Each visit is either **pay per service** (the default — a department acts on a
@@ -149,7 +171,8 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 | 2 | Billing: price list, bills, payment, collections | Done |
 | — | JSON API + React client (replaced the server-rendered screens) | Done |
 | 3 | Consultation: the note, orders, closing the visit | Done |
-| 4–8 | Lab, Pharmacy, Procedure, Appointments | Next |
+| 4 | Laboratory: worklist, specimen, result, release | Done |
+| 5–8 | Pharmacy, Procedure, Appointments | Next |
 | 9–10 | Reporting, UAT, go-live | Not started |
 
 ## Tests

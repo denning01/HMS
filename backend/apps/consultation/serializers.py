@@ -2,6 +2,8 @@
 
 from rest_framework import serializers
 
+from apps.laboratory.serializers import LabResultSerializer
+from apps.orders.serializers import OrderSerializer
 from apps.patients.serializers import VisitSerializer
 from apps.triage.serializers import VitalsSerializer
 
@@ -51,10 +53,11 @@ class ConsultationQueueSerializer(VisitSerializer):
     urgency_reasons = serializers.SerializerMethodField()
     has_note = serializers.SerializerMethodField()
     open_orders = serializers.SerializerMethodField()
+    results_ready = serializers.SerializerMethodField()
 
     class Meta(VisitSerializer.Meta):
         fields = VisitSerializer.Meta.fields + [
-            "vitals", "urgency_reasons", "has_note", "open_orders",
+            "vitals", "urgency_reasons", "has_note", "open_orders", "results_ready",
         ]
 
     def get_vitals(self, visit):
@@ -80,3 +83,33 @@ class ConsultationQueueSerializer(VisitSerializer):
         """How much of what the doctor asked for is still outstanding — the
         reason a visit sits in the queue after it has been seen."""
         return sum(1 for order in visit.orders.all() if order.is_open)
+
+    def get_results_ready(self, visit):
+        """Results back and released. This is what tells the doctor to call a
+        patient back in rather than leaving them on a bench outside."""
+        return sum(
+            1
+            for order in visit.orders.all()
+            if getattr(order, "lab_result", None) is not None and order.lab_result.is_released
+        )
+
+
+class ConsultationOrderSerializer(OrderSerializer):
+    """An order as the doctor reads it back, carrying whatever the department
+    has returned so far.
+
+    A result that has not been released is not shown. Until someone in the lab
+    has put their name to it, it is a reading on a bench, not something to treat
+    a patient on.
+    """
+
+    result = serializers.SerializerMethodField()
+
+    class Meta(OrderSerializer.Meta):
+        fields = OrderSerializer.Meta.fields + ["result"]
+
+    def get_result(self, order):
+        result = getattr(order, "lab_result", None)
+        if result is None or not result.is_released:
+            return None
+        return LabResultSerializer(result).data

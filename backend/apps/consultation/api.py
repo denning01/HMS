@@ -20,6 +20,7 @@ from apps.triage.serializers import VitalsSerializer
 from .models import Consultation
 from .serializers import (
     CONDITIONAL_HISTORY_FIELDS,
+    ConsultationOrderSerializer,
     ConsultationQueueSerializer,
     ConsultationSerializer,
 )
@@ -36,7 +37,7 @@ QUEUE_STATUSES = [VisitStatus.AWAITING_CONSULTATION, VisitStatus.IN_CONSULTATION
 
 def visit_queryset():
     return Visit.objects.select_related("patient", "vitals", "consultation").prefetch_related(
-        "orders__service", "orders__invoice_line__invoice__visit"
+        "orders__service", "orders__invoice_line__invoice__visit", "orders__lab_result"
     )
 
 
@@ -72,7 +73,9 @@ class ConsultationDetailView(APIView):
                 if hasattr(visit, "vitals")
                 else None,
                 "consultation": ConsultationSerializer(note).data if note else None,
-                "orders": OrderSerializer(orders_for(visit), many=True).data,
+                "orders": ConsultationOrderSerializer(
+                    orders_for(visit).select_related("lab_result"), many=True
+                ).data,
                 "invoice": InvoiceSerializer(invoice).data if invoice else None,
                 # Navigation for the client; the server refuses the write regardless.
                 "can_edit": user_has_any_role(request.user, CONSULTING_ROLES),

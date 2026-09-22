@@ -5,6 +5,7 @@ from django.urls import path
 from apps.accounts import api as accounts_api
 from apps.billing import api as billing_api
 from apps.consultation import api as consultation_api
+from apps.laboratory import api as laboratory_api
 from apps.patients import api as patients_api
 from apps.triage import api as triage_api
 
@@ -26,6 +27,12 @@ urlpatterns = [
     path("consultation/<int:visit_id>/orders/", consultation_api.ConsultationOrdersView.as_view(), name="api_place_order"),
     path("consultation/<int:visit_id>/close/", consultation_api.CloseVisitView.as_view(), name="api_close_visit"),
     path("orders/<int:pk>/cancel/", consultation_api.CancelOrderView.as_view(), name="api_cancel_order"),
+
+    path("lab/worklist/", laboratory_api.LabWorklistView.as_view(), name="api_lab_worklist"),
+    path("lab/orders/<int:pk>/", laboratory_api.LabOrderView.as_view(), name="api_lab_order"),
+    path("lab/orders/<int:pk>/collect/", laboratory_api.CollectSpecimenView.as_view(), name="api_lab_collect"),
+    path("lab/orders/<int:pk>/result/", laboratory_api.RecordResultView.as_view(), name="api_lab_result"),
+    path("lab/orders/<int:pk>/release/", laboratory_api.ReleaseResultView.as_view(), name="api_lab_release"),
 
     path("billing/services/", billing_api.ServiceListView.as_view(), name="api_services"),
     path("billing/till/", billing_api.TillView.as_view(), name="api_till"),

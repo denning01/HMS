@@ -14,6 +14,8 @@ export const keys = {
   consultationQueue: ['consultation', 'queue'],
   consultationRecord: (visitId) => ['consultation', visitId],
   services: (department) => ['billing', 'services', department],
+  labWorklist: ['lab', 'worklist'],
+  labOrder: (id) => ['lab', 'order', id],
   till: (term) => ['billing', 'till', term],
   invoice: (id) => ['billing', 'invoice', id],
   receipt: (id) => ['billing', 'receipt', id],
@@ -149,6 +151,40 @@ export function useCancelOrder(visitId) {
 export function useCloseVisit(visitId) {
   return useConsultationMutation(visitId, () => api.post(`/consultation/${visitId}/close/`, {}))
 }
+
+export function useLabWorklist() {
+  return useQuery({
+    queryKey: keys.labWorklist,
+    queryFn: () => api.get('/lab/worklist/'),
+    refetchInterval: QUEUE_REFRESH_MS,
+  })
+}
+
+export function useLabOrder(orderId) {
+  return useQuery({
+    queryKey: keys.labOrder(orderId),
+    queryFn: () => api.get(`/lab/orders/${orderId}/`),
+  })
+}
+
+/**
+ * Collecting, recording and releasing all move the same things: this test, the
+ * bench it sits on, and the doctor's queue waiting on the result.
+ */
+function useLabStep(orderId, step) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (values) => api.post(`/lab/orders/${orderId}/${step}/`, values ?? {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lab'] })
+      queryClient.invalidateQueries({ queryKey: ['consultation'] })
+    },
+  })
+}
+
+export const useCollectSpecimen = (orderId) => useLabStep(orderId, 'collect')
+export const useRecordResult = (orderId) => useLabStep(orderId, 'result')
+export const useReleaseResult = (orderId) => useLabStep(orderId, 'release')
 
 export function useTill(term) {
   return useQuery({

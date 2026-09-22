@@ -39,6 +39,12 @@ export default function ConsultationQueue() {
                     <span className="text-sm font-medium text-ink">{visit.patient.full_name}</span>
                     {visit.is_urgent && <Badge tone="danger"> Urgent</Badge>}
                     {visit.patient.is_paediatric && <Badge tone="warn"> Paediatric</Badge>}
+                    {visit.results_ready > 0 && (
+                      <Badge tone="good">
+                        {' '}
+                        {visit.results_ready} {visit.results_ready === 1 ? 'result' : 'results'} back
+                      </Badge>
+                    )}
                     {visit.open_orders > 0 && (
                       <Badge tone="quiet">
                         {' '}

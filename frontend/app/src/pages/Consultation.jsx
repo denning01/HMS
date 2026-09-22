@@ -222,6 +222,22 @@ function OrdersCard({ visitId, orders, canEdit }) {
                   {order.clinical_details && (
                     <span className="mt-0.5 block text-xs text-muted">{order.clinical_details}</span>
                   )}
+
+                  {/* Only released results appear here — the API withholds the rest. */}
+                  {order.result && (
+                    <p className="mt-2 rounded-lg bg-canvas px-3 py-2 text-sm text-ink">
+                      {order.result.is_abnormal && <Badge tone="danger">Abnormal</Badge>}{' '}
+                      {order.result.findings}
+                      <span className="mt-0.5 block text-xs text-muted">
+                        {order.result.specimen_display} · released by{' '}
+                        {order.result.released_by_name} ·{' '}
+                        {new Date(order.result.released_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex shrink-0 items-center gap-3">
