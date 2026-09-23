@@ -229,8 +229,23 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 | 7 | Appointments: the diary, arrivals and follow-ups | Done |
 | 8 | Reporting: revenue, cost and profit over a period | Done |
 | 9 | Administration: price list, stock list, staff and roles | Done |
-| 10 | UAT and go-live | Next |
+| 10 | UAT: the journey end to end, patient history, demo clinic | Done |
+| — | Go-live | Next |
 | 9–10 | Reporting, UAT, go-live | Not started |
+
+## Walking the system
+
+For user acceptance testing, fill a development database with a clinic that has
+been trading — a register of patients, stock on the shelf, and one patient at
+each stage of the journey, so every queue and every report has something in it:
+
+```bash
+.venv/bin/python manage.py seed_demo_clinic   # development only; refuses with DEBUG off
+```
+
+Running it twice gives the same clinic back rather than a second attendance for
+everybody. It calls the other seeders itself, and creates the demo staff account
+for every role (password `demo-password-123`).
 
 ## Tests
 
@@ -241,3 +256,9 @@ npx --prefix frontend/app oxlint src
 
 The API tests are the guard on every rule the screens used to enforce: who may
 call what, what the server refuses, and that a client cannot dictate an amount.
+
+`backend/apps/test_journey.py` is the other kind. Every other test file asks one
+module whether it enforces its own rules; that one walks a single patient from
+the front desk to the owner's report and asks whether the modules hand off to
+each other. When it fails, the line it fails on is the step of the patient
+journey that broke.

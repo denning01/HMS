@@ -313,6 +313,50 @@ function OrdersCard({ visitId, orders, canEdit }) {
   )
 }
 
+/* --- history ------------------------------------------------------------ */
+
+/**
+ * What happened last time, without the doctor asking the patient to repeat it.
+ * This is the whole point of one patient record across visits.
+ */
+function HistoryCard({ history }) {
+  if (!history.length) return null
+
+  return (
+    <Card title="Earlier visits">
+      <Rows>
+        {history.map((visit) => (
+          <Row key={visit.id} className="items-start">
+            <div className="min-w-0">
+              <span className="text-sm text-ink">
+                {visit.diagnosis || 'No diagnosis recorded'}
+              </span>
+              <span className="mt-0.5 block text-xs text-muted">
+                {new Date(visit.started_at).toLocaleDateString([], {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+                {visit.doctor_name && ` · ${visit.doctor_name}`} · {visit.status_display}
+              </span>
+              {visit.orders.length > 0 && (
+                <span className="mt-0.5 block text-xs text-muted">
+                  {visit.orders.join(' · ')}
+                </span>
+              )}
+              {visit.results.map((result) => (
+                <p key={result.id} className="mt-2 rounded-lg bg-canvas px-3 py-2 text-sm text-ink">
+                  {result.is_abnormal && <Badge tone="danger">Abnormal</Badge>} {result.findings}
+                </p>
+              ))}
+            </div>
+          </Row>
+        ))}
+      </Rows>
+    </Card>
+  )
+}
+
 /* --- follow-up ---------------------------------------------------------- */
 
 /**
@@ -450,6 +494,8 @@ export default function Consultation() {
 
       <div className="grid gap-4">
         <VitalsCard vitals={record?.vitals} />
+
+        <HistoryCard history={record?.history ?? []} />
 
         <form onSubmit={submitNote}>
           <Card title="Consultation note">

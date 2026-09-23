@@ -137,3 +137,46 @@ class ConsultationOrderRequestSerializer(PlaceOrderSerializer):
     """
 
     directions = DirectionsSerializer(required=False)
+
+
+class VisitHistorySerializer(serializers.Serializer):
+    """A previous visit, as the doctor needs it before seeing the patient again.
+
+    Not the whole record — the date, what was concluded, and what came back.
+    Enough to know whether this is the same complaint returning, without the
+    doctor asking the patient to repeat a history the clinic already holds.
+    """
+
+    id = serializers.IntegerField()
+    started_at = serializers.DateTimeField()
+    closed_at = serializers.DateTimeField()
+    status_display = serializers.CharField(source="get_status_display")
+    diagnosis = serializers.SerializerMethodField()
+    doctor_name = serializers.SerializerMethodField()
+    orders = serializers.SerializerMethodField()
+    results = serializers.SerializerMethodField()
+
+    def get_diagnosis(self, visit):
+        note = getattr(visit, "consultation", None)
+        return note.diagnosis if note else ""
+
+    def get_doctor_name(self, visit):
+        note = getattr(visit, "consultation", None)
+        user = note.doctor if note else None
+        return (user.get_full_name() or user.username) if user else None
+
+    def get_orders(self, visit):
+        return [
+            order.service.name
+            for order in visit.orders.all()
+            if order.status != "cancelled"
+        ]
+
+    def get_results(self, visit):
+        """Released results only, same rule as the current visit."""
+        released = [
+            order.lab_result
+            for order in visit.orders.all()
+            if getattr(order, "lab_result", None) is not None and order.lab_result.is_released
+        ]
+        return LabResultSerializer(released, many=True).data

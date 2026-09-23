@@ -25,6 +25,7 @@ from .serializers import (
     ConsultationOrderSerializer,
     ConsultationQueueSerializer,
     ConsultationSerializer,
+    VisitHistorySerializer,
 )
 from .services import ConsultationError, close_visit, open_note
 
@@ -35,6 +36,22 @@ RECORD_VIEW_ROLES = CONSULTING_ROLES + (Role.TRIAGE_NURSE,)
 # Waiting to be seen, and already being seen. Both belong on the doctor's screen:
 # a visit that has gone off for a test is still theirs to pick up afterwards.
 QUEUE_STATUSES = [VisitStatus.AWAITING_CONSULTATION, VisitStatus.IN_CONSULTATION]
+
+
+# Enough to recognise a returning complaint without turning the screen into a
+# file review. The rest of the record is in the patient's own page.
+HISTORY_LIMIT = 5
+
+
+def history_for(visit):
+    """This patient's earlier visits, most recent first."""
+    return (
+        Visit.objects.filter(patient_id=visit.patient_id)
+        .exclude(pk=visit.pk)
+        .select_related("consultation__doctor")
+        .prefetch_related("orders__service", "orders__lab_result")
+        .order_by("-started_at")[:HISTORY_LIMIT]
+    )
 
 
 def visit_queryset():
@@ -85,6 +102,7 @@ class ConsultationDetailView(APIView):
                 ).data,
                 "invoice": InvoiceSerializer(invoice).data if invoice else None,
                 # Navigation for the client; the server refuses the write regardless.
+                "history": VisitHistorySerializer(history_for(visit), many=True).data,
                 "can_edit": user_has_any_role(request.user, CONSULTING_ROLES),
                 "applies_gynae_obstetric_history": visit.patient.sex == Sex.FEMALE,
             }
