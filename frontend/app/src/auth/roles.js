@@ -47,7 +47,11 @@ export const MODULES = [
     role: Role.LAB_TECHNICIAN,
     items: [
       { label: 'Lab worklist', description: 'Paid test orders awaiting processing', to: '/lab' },
-      { label: 'Test catalogue', description: 'Available tests and sample types', to: null },
+      { label: 'Turnaround', description: 'How long tests take, and what is still waiting', to: '/lab/turnaround' },
+      // Prices and the catalogue are the Administrator's alone, per the matrix,
+      // so this stays shown-but-unreachable rather than sending a technician
+      // into a screen that would refuse them.
+      { label: 'Test catalogue', description: 'Maintained by the Administrator', to: null },
     ],
   },
   {
@@ -77,6 +81,7 @@ export const MODULES = [
       { label: 'Bills', description: 'Every open bill and what is outstanding', to: '/billing' },
       { label: 'Collections', description: 'What was taken today, by department and cashier', to: '/billing/collections' },
       { label: 'Stock', description: 'What is on the shelf and what it cost', to: '/pharmacy/stock' },
+      { label: 'Lab turnaround', description: 'How long tests take, and what is still waiting', to: '/lab/turnaround' },
       { label: 'Revenue and profit', description: 'Takings against the stock they used', to: '/reports' },
     ],
   },
@@ -94,6 +99,7 @@ export const MODULES = [
       { label: 'Point of sale', description: 'Take payment and issue receipts', to: '/billing' },
       { label: 'Collections', description: 'What was taken today, by department and cashier', to: '/billing/collections' },
       { label: 'Revenue and profit', description: 'Takings against the stock they used', to: '/reports' },
+      { label: 'Lab turnaround', description: 'How long tests take, and what is still waiting', to: '/lab/turnaround' },
       { label: 'Price list', description: 'Consultation, test, drug and procedure pricing', to: '/settings/price-list' },
       { label: 'Stock list', description: 'What the clinic counts, and when to reorder', to: '/settings/stock-list' },
     ],

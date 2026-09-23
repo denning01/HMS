@@ -164,7 +164,12 @@ Each department attaches its own record to the order as the module is built.
 The laboratory's is `LabResult`: the specimen, the findings, and the three
 stamps the specification asks for — collected, recorded, released. A result is
 invisible to the doctor until it is released, because until then nobody has put
-their name to it.
+their name to it. Those same stamps answer how long the bench takes: **Lab
+turnaround** reports ordered-to-released over a period, split into the three
+legs it is made of — waiting for a specimen, on the bench, and written but not
+yet signed off — because they fail for different reasons. Tests still
+outstanding are listed beside it, including the ones held at the till, since the
+patient is waiting either way.
 
 The pharmacy's is `Prescription` — the directions the drug goes out with — and
 dispensing moves stock off the shelf in the same transaction, so pharmacy sales

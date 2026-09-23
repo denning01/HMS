@@ -13,6 +13,7 @@ import Invoice from './pages/Invoice'
 import DispenseOrder from './pages/DispenseOrder'
 import Dispensing from './pages/Dispensing'
 import LabOrder from './pages/LabOrder'
+import LabTurnaround from './pages/LabTurnaround'
 import LabWorklist from './pages/LabWorklist'
 import Login from './pages/Login'
 import PatientDetail from './pages/PatientDetail'
@@ -55,6 +56,8 @@ const DIARY = [Role.RECEPTIONIST, Role.ADMINISTRATOR, Role.DOCTOR]
 const CLINICAL_RECORD = [...CONSULTING, Role.TRIAGE_NURSE]
 const BILLING = [Role.CASHIER, Role.ADMINISTRATOR, Role.FINANCE_MANAGER]
 const LABORATORY = [Role.LAB_TECHNICIAN, Role.ADMINISTRATOR]
+// The lab's own figure, read by the two people who answer for the clinic too.
+const LAB_PERFORMANCE = [...LABORATORY, Role.FINANCE_MANAGER]
 const PHARMACY = [Role.PHARMACIST, Role.ADMINISTRATOR]
 const PROCEDURES = [Role.PROCEDURE_NURSE, Role.ADMINISTRATOR]
 // Finance answers for the money tied up on the shelf, so it reads stock too.
@@ -89,6 +92,7 @@ export default function App() {
         <Route path="consultation/:visitId" element={<Allow roles={CLINICAL_RECORD}><Consultation /></Allow>} />
 
         <Route path="lab" element={<Allow roles={LABORATORY}><LabWorklist /></Allow>} />
+        <Route path="lab/turnaround" element={<Allow roles={LAB_PERFORMANCE}><LabTurnaround /></Allow>} />
         <Route path="lab/orders/:orderId" element={<Allow roles={LABORATORY}><LabOrder /></Allow>} />
 
         <Route path="pharmacy" element={<Allow roles={PHARMACY}><Dispensing /></Allow>} />

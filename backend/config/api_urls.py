@@ -39,6 +39,7 @@ urlpatterns = [
     path("orders/<int:pk>/cancel/", consultation_api.CancelOrderView.as_view(), name="api_cancel_order"),
 
     path("lab/worklist/", laboratory_api.LabWorklistView.as_view(), name="api_lab_worklist"),
+    path("lab/turnaround/", laboratory_api.TurnaroundView.as_view(), name="api_lab_turnaround"),
     path("lab/orders/<int:pk>/", laboratory_api.LabOrderView.as_view(), name="api_lab_order"),
     path("lab/orders/<int:pk>/collect/", laboratory_api.CollectSpecimenView.as_view(), name="api_lab_collect"),
     path("lab/orders/<int:pk>/result/", laboratory_api.RecordResultView.as_view(), name="api_lab_result"),

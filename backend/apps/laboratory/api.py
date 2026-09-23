@@ -1,5 +1,8 @@
 """The laboratory over the API: the bench worklist and one test's three steps."""
 
+from datetime import date, timedelta
+
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,6 +12,7 @@ from apps.accounts.permissions import HasAnyRole
 from apps.billing.models import Department
 from apps.orders.selectors import worklist
 
+from . import reports
 from .serializers import (
     CollectSpecimenSerializer,
     LabOrderSerializer,
@@ -24,6 +28,13 @@ from .services import (
 )
 
 LAB_ROLES = (Role.LAB_TECHNICIAN, Role.ADMINISTRATOR)
+# Turnaround is the lab's own figure, and the two people who answer for the
+# clinic's performance read it too.
+TURNAROUND_ROLES = LAB_ROLES + (Role.FINANCE_MANAGER,)
+
+# A week reads as a week: today and the six days behind it.
+DEFAULT_RANGE_DAYS = 6
+MAX_RANGE_DAYS = 366
 
 
 class LabWorklistView(APIView):
@@ -109,3 +120,46 @@ class RecordResultView(LabStepView):
 class ReleaseResultView(LabStepView):
     def run(self, request, order):
         release_result(order, released_by=request.user)
+
+
+class TurnaroundView(APIView):
+    """How long the bench took, over a period, and what is still on it."""
+
+    permission_classes = [HasAnyRole]
+    roles = TURNAROUND_ROLES
+
+    def get(self, request):
+        today = timezone.localdate()
+        invalid_range = False
+
+        def read(name, fallback):
+            nonlocal invalid_range
+            raw = request.query_params.get(name, "")
+            if not raw:
+                return fallback
+            try:
+                return date.fromisoformat(raw)
+            except ValueError:
+                invalid_range = True
+                return fallback
+
+        end = read("to", today)
+        start = read("from", end - timedelta(days=DEFAULT_RANGE_DAYS))
+
+        if start > end:
+            start, end = end, start
+        if (end - start).days > MAX_RANGE_DAYS:
+            start = end - timedelta(days=MAX_RANGE_DAYS)
+            invalid_range = True
+
+        figures = reports.summary(start, end)
+
+        return Response(
+            {
+                "from": start.isoformat(),
+                "to": end.isoformat(),
+                "days": (end - start).days + 1,
+                "invalid_range": invalid_range,
+                **figures,
+            }
+        )

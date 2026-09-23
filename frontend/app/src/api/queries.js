@@ -17,6 +17,7 @@ export const keys = {
   appointments: (day, term) => ['appointments', day, term],
   labWorklist: ['lab', 'worklist'],
   labOrder: (id) => ['lab', 'order', id],
+  labTurnaround: (from, to) => ['lab', 'turnaround', from, to],
   dispensingQueue: ['pharmacy', 'dispensing'],
   prescription: (id) => ['pharmacy', 'order', id],
   stock: ['pharmacy', 'stock'],
@@ -231,6 +232,19 @@ function useLabStep(orderId, step) {
 export const useCollectSpecimen = (orderId) => useLabStep(orderId, 'collect')
 export const useRecordResult = (orderId) => useLabStep(orderId, 'result')
 export const useReleaseResult = (orderId) => useLabStep(orderId, 'release')
+
+export function useLabTurnaround(from, to) {
+  return useQuery({
+    queryKey: keys.labTurnaround(from, to),
+    queryFn: () => {
+      const query = new URLSearchParams()
+      if (from) query.set('from', from)
+      if (to) query.set('to', to)
+      return api.get(`/lab/turnaround/${query.size ? `?${query}` : ''}`)
+    },
+    placeholderData: (previous) => previous,
+  })
+}
 
 export function useDispensingQueue() {
   return useQuery({
