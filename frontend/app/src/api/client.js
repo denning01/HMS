@@ -11,6 +11,9 @@ function readCookie(name) {
     ?.split('=')[1]
 }
 
+/** Fired when the server says nobody is signed in. The auth provider listens. */
+export const SIGNED_OUT = 'hms:signed-out'
+
 /** Thrown for any non-2xx response, carrying what the server said. */
 export class ApiError extends Error {
   constructor(status, body) {
@@ -44,6 +47,10 @@ async function request(path, { method = 'GET', body, signal } = {}) {
     body: body === undefined ? undefined : JSON.stringify(body),
     signal,
   })
+
+  // 401 is the session having run out, not a screen refusing. Announced once,
+  // here, so no screen has to handle it and none can forget to.
+  if (response.status === 401) window.dispatchEvent(new CustomEvent(SIGNED_OUT))
 
   if (response.status === 204) return null
 

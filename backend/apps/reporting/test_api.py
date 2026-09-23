@@ -67,7 +67,7 @@ def a_days_trading(roles):
 
 
 def test_the_report_refuses_anonymous_callers(client, db):
-    assert client.get(reverse("api_revenue_report")).status_code == 403
+    assert client.get(reverse("api_revenue_report")).status_code == 401
 
 
 def test_the_cashier_reconciles_but_does_not_read_the_owners_figure(roles, client):

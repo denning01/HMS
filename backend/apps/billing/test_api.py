@@ -53,7 +53,19 @@ def billed_visit(roles):
 
 
 def test_the_api_refuses_anonymous_callers(client, db):
-    assert client.get(reverse("api_till")).status_code == 403
+    assert client.get(reverse("api_till")).status_code == 401
+
+
+def test_signed_out_and_not_allowed_are_different_answers(cashier, client, db):
+    """The client shows a sign-in screen for one and an explanation for the
+    other, and cannot tell them apart if both come back 403."""
+    signed_out = client.get(reverse("api_till"))
+
+    client.force_login(cashier)
+    not_allowed = client.get(reverse("api_revenue_report"))
+
+    assert signed_out.status_code == 401
+    assert not_allowed.status_code == 403
 
 
 def test_login_starts_a_session_and_returns_the_user(cashier, client):
@@ -90,7 +102,9 @@ def test_logout_ends_the_session(cashier, client):
     client.force_login(cashier)
 
     assert client.post(reverse("api_logout")).status_code == 204
-    assert client.get(reverse("api_me")).status_code == 403
+    # 401, not 403: the next request finds nobody signed in, which is what sends
+    # the client back to the sign-in screen.
+    assert client.get(reverse("api_me")).status_code == 401
 
 
 # --- roles -----------------------------------------------------------------

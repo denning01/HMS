@@ -60,7 +60,7 @@ def post(client, url, payload):
 
 
 def test_the_consultation_api_refuses_anonymous_callers(client, db):
-    assert client.get(reverse("api_consultation_queue")).status_code == 403
+    assert client.get(reverse("api_consultation_queue")).status_code == 401
 
 
 def test_a_receptionist_is_refused_the_doctors_queue(roles, client):

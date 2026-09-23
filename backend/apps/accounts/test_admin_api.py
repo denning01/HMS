@@ -48,7 +48,7 @@ def patch(client, url, payload):
 
 
 def test_administration_refuses_anonymous_callers(client, db):
-    assert client.get(reverse("api_admin_services")).status_code == 403
+    assert client.get(reverse("api_admin_services")).status_code == 401
 
 
 def test_the_finance_manager_reads_prices_but_does_not_set_them(roles, client):

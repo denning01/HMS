@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { api, ApiError } from '../api/client'
+import { api, ApiError, SIGNED_OUT } from '../api/client'
 import { AuthContext } from './context'
 
 /**
@@ -36,6 +36,19 @@ export function AuthProvider({ children }) {
       cancelled = true
     }
   }, [])
+
+  // A session now follows a shift rather than a browser, so it can run out
+  // while a screen is open. When it does, every request says so and the person
+  // gets the sign-in screen rather than a wall of errors they cannot act on.
+  useEffect(() => {
+    function onSignedOut() {
+      setUser(null)
+      queryClient.clear()
+    }
+
+    window.addEventListener(SIGNED_OUT, onSignedOut)
+    return () => window.removeEventListener(SIGNED_OUT, onSignedOut)
+  }, [queryClient])
 
   async function signIn(username, password) {
     const me = await api.post('/auth/login/', { username, password })

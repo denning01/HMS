@@ -169,4 +169,8 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
     ],
     "UNAUTHENTICATED_USER": "django.contrib.auth.models.AnonymousUser",
+    # 401 when nobody is signed in, 403 when someone is and the answer is still
+    # no. The client shows a sign-in screen for one and an explanation for the
+    # other, and cannot tell them apart if both are 403.
+    "EXCEPTION_HANDLER": "apps.accounts.exceptions.exception_handler",
 }

@@ -51,7 +51,7 @@ def post(client, url, payload=None):
 
 
 def test_the_diary_refuses_anonymous_callers(client, db):
-    assert client.get(reverse("api_appointments")).status_code == 403
+    assert client.get(reverse("api_appointments")).status_code == 401
 
 
 def test_the_lab_has_no_business_in_the_diary(roles, client):

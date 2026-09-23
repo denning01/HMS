@@ -49,6 +49,12 @@ Role gating exists on both sides and means different things. `HasAnyRole` on the
 API is the security boundary. The role checks in the client are navigation: they
 keep a nurse from clicking into a screen that would only refuse them.
 
+The API answers **401** when nobody is signed in and **403** when someone is and
+the answer is still no. DRF gives 403 for both under session authentication, and
+the client cannot tell them apart that way — one means the session has run out
+and the person should sign in again, the other means they may not do this. A 401
+on any request sends the client back to the sign-in screen, wherever it was.
+
 ## Stack
 
 - **Backend** — Django 6.1 + Django REST Framework, PostgreSQL 16
@@ -230,8 +236,28 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 | 8 | Reporting: revenue, cost and profit over a period | Done |
 | 9 | Administration: price list, stock list, staff and roles | Done |
 | 10 | UAT: the journey end to end, patient history, demo clinic | Done |
-| — | Go-live | Next |
+| — | Go-live: release phase, runbook, session hardening | Done |
+
+Every module in the specification is built. What is deliberately not built is
+listed at the end of `docs/RUNBOOK.md` — no refunds, no insurance, no SMS, no
+cost recorded against consultation or laboratory revenue, one site.
 | 9–10 | Reporting, UAT, go-live | Not started |
+
+## Going live
+
+`docs/RUNBOOK.md` is the operational document: first deploy, what the release
+phase does, what to check after it, backups and restores, how to roll back a
+release that migrated, and what to do when a department says a paid order has
+not reached them.
+
+The release phase runs Django's deployment checks first, so a missing
+`SECRET_KEY` or a wildcard `ALLOWED_HOSTS` stops the deploy rather than serving
+it. `wsgi.py` defaults to the production settings, so a deployment that forgets
+`DJANGO_SETTINGS_MODULE` fails closed instead of serving with `DEBUG=True`.
+
+Sessions follow a shift rather than a browser: refreshed on every request and
+dead eight hours after the last one, so a shared screen left on overnight is
+signed out by morning.
 
 ## Walking the system
 

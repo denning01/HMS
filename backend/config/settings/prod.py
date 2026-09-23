@@ -24,6 +24,13 @@ SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
+# A shared screen at the front desk is signed in as whoever last used it. The
+# session follows a shift rather than a browser: it is refreshed on every
+# request and dies eight hours after the last one, so a machine left on
+# overnight is signed out by morning without anyone having to remember.
+SESSION_COOKIE_AGE = 8 * 60 * 60
+SESSION_SAVE_EVERY_REQUEST = True
+
 # Errors go to stdout, where every managed platform collects them.
 LOGGING = {
     "version": 1,

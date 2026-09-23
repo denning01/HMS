@@ -67,7 +67,7 @@ def post(client, url, payload=None):
 
 
 def test_the_lab_api_refuses_anonymous_callers(client, db):
-    assert client.get(reverse("api_lab_worklist")).status_code == 403
+    assert client.get(reverse("api_lab_worklist")).status_code == 401
 
 
 def test_the_doctor_who_ordered_it_does_not_work_the_bench(roles, client, order):
