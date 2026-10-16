@@ -1,0 +1,27 @@
+# Keep the build context to what the image actually needs. node_modules and
+# .venv alone are hundreds of megabytes that both stages install for themselves.
+.git
+.github
+.venv
+venv
+node_modules
+frontend/app/node_modules
+frontend/app/dist
+staticfiles
+__pycache__
+*.py[cod]
+.pytest_cache
+.coverage
+htmlcov
+
+# Never let a local .env reach the image. Secrets arrive as environment
+# variables from the platform.
+.env
+.env.*
+!.env.example
+
+docs
+README.md
+Procfile
+*.md
+.DS_Store

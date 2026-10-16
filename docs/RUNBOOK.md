@@ -10,7 +10,7 @@ it.
 |---|---|---|
 | Web process | Gunicorn serving Django: `/api/`, `/admin/`, `/healthz/`, and the client's `index.html` for every other path | `/healthz/` stops returning 200 |
 | Database | PostgreSQL 16. Everything is here — patients, visits, money, stock | `/healthz/` returns 503 with `"database": "unreachable"` |
-| Client | A static bundle built at release time and served by WhiteNoise from the same origin | Screens load but every request 404s, or the page is blank after a deploy |
+| Client | A static bundle built **into the image** and served by WhiteNoise from the same origin | Screens load but every request 404s, or the page is blank after a deploy |
 
 There is no queue, no cache and no background worker. A request either finishes
 or it does not, which is deliberate: a clinic that cannot take payment because a
@@ -18,20 +18,47 @@ worker is stuck is worse than one that waits two seconds.
 
 ## First deploy
 
+The deployment is a Docker image, built from `Dockerfile` at the repository
+root. Render and Railway both build it as it stands; `render.yaml` wires up the
+Render side — web service, database, health check and release phase — so that
+most of what follows happens on its own.
+
+**On Render:** Blueprints → New Blueprint Instance → this repository. That
+creates everything below except step 3.
+
+**Anywhere else:** build the Dockerfile, provision PostgreSQL 16, set the same
+variables, and run the release command of step 4 before the new image serves.
+
 1. **Provision** a PostgreSQL 16 database and note its connection URL.
+   `render.yaml` creates one; it is deliberately not the free tier, which is
+   deleted after 30 days and this holds patient records.
+
 2. **Set the environment** on the web process:
 
-   | Variable | Value |
-   |---|---|
-   | `SECRET_KEY` | 50+ random characters. `python -c "from django.core.management.utils import get_random_secret_key as k; print(k())"` |
-   | `DATABASE_URL` | `postgres://user:password@host:5432/dbname` |
-   | `ALLOWED_HOSTS` | The clinic's domain, comma-separated. No wildcard. |
-   | `CSRF_TRUSTED_ORIGINS` | `https://the-clinic-domain` |
-   | `DJANGO_SETTINGS_MODULE` | Leave unset. `wsgi.py` defaults to production, so a forgotten variable fails closed rather than serving with `DEBUG=True`. |
+   | Variable | Value | Blueprint |
+   |---|---|---|
+   | `SECRET_KEY` | 50+ random characters | Generated |
+   | `DATABASE_URL` | `postgres://user:password@host:5432/dbname` | From the database |
+   | `ALLOWED_HOSTS` | The service hostname and the clinic's domain, comma-separated. No wildcard. | Service hostname |
+   | `CSRF_TRUSTED_ORIGINS` | `https://the-clinic-domain` — **with the scheme** | **Set by hand** |
+   | `WEB_CONCURRENCY` | Gunicorn workers. 3 is the default. | `3` |
+   | `DJANGO_SETTINGS_MODULE` | Do not set it. The image sets `config.settings.prod`. | — |
 
-3. **Deploy.** The release phase runs Django's deployment checks, builds the
-   client, migrates, and creates the nine role groups.
-4. **Seed the catalogues** once, from a one-off shell:
+   On the settings module: `wsgi.py` defaults to production, but `manage.py`
+   defaults to *development*, so release commands and one-off shells would
+   otherwise run against dev settings — `check --deploy` would inspect the wrong
+   configuration and the `DEBUG` guard on the demo seeders would not fire. The
+   image sets it for both, which is why nothing needs to be set here.
+
+3. **Set `CSRF_TRUSTED_ORIGINS`** once the service has a hostname, and redeploy.
+   It is the one value the blueprint cannot compose, because it needs `https://`
+   in front of a hostname that does not exist until the service does.
+
+4. **Deploy.** The release phase runs Django's deployment checks, migrates, and
+   creates the nine role groups — before the new image serves traffic, so a
+   failure leaves the previous one running.
+
+5. **Seed the catalogues** once, from a one-off shell:
 
    ```bash
    python manage.py seed_services      # the price list
@@ -42,7 +69,7 @@ worker is stuck is worse than one that waits two seconds.
    All three are idempotent and none overwrites anything, so re-running them
    after the clinic has set its own prices is safe.
 
-5. **Create the first administrator:**
+6. **Create the first administrator:**
 
    ```bash
    python manage.py createsuperuser
@@ -51,11 +78,12 @@ worker is stuck is worse than one that waits two seconds.
    Then sign in and create the real staff accounts under **Staff and roles**.
    The superuser holds every role; nobody should work day to day as one.
 
-6. **Walk it once** before anyone relies on it — the checks under *After every
+7. **Walk it once** before anyone relies on it — the checks under *After every
    release*, plus one real patient end to end.
 
 Do **not** run `seed_demo_staff` or `seed_demo_clinic` against production. Both
-refuse with `DEBUG` off; that refusal is the last line of defence, not the plan.
+refuse with `DEBUG` off, and in this image they do read `DEBUG` off; that
+refusal is the last line of defence, not the plan.
 
 ## Every release
 
@@ -65,9 +93,17 @@ that is the point of doing it there rather than on boot.
 | Step | Fails when |
 |---|---|
 | `check --deploy` | A setting that would be a breach is missing or wrong |
-| `npm ci && npm run build` | The client does not build |
 | `migrate --noinput` | A migration conflicts with the live schema |
 | `seed_roles` | Never, in practice — it only creates what is missing |
+
+The client bundle and `collectstatic` are **not** here — they happen in the
+image build, and they have to. The release phase runs in a throwaway container
+whose filesystem the web process never sees, so a bundle built there would be
+discarded and every screen would fail on a missing template. `collectstatic` is
+the same story with a sharper edge: the staticfiles storage is
+`CompressedManifestStaticFilesStorage`, so without its manifest every
+`{% static %}` reference raises and `/admin/` returns 500 rather than rendering
+unstyled. A build that fails takes the deploy with it, before any of this.
 
 ### After every release
 

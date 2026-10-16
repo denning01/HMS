@@ -1,0 +1,72 @@
+# Render blueprint: the web service, its database, and the release phase.
+#
+# The image is the Dockerfile, so Railway or anything else that builds a
+# Dockerfile takes the same build — only the wiring below is Render's.
+#
+# Apply it from the dashboard (Blueprints → New Blueprint Instance) against this
+# repository. Everything here is created on the first apply except the two values
+# marked sync:false, which are set by hand because they are not knowable until
+# the service has a hostname.
+
+services:
+  - type: web
+    name: hmis
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: frankfurt
+    # preDeployCommand is not available on the free instance type. On free,
+    # leave it out and run the same three commands once from a shell instead.
+    plan: starter
+
+    # Render stops sending traffic to an instance this stops answering, so a
+    # release that comes up with an unreachable database never takes over from
+    # the one still serving.
+    healthCheckPath: /healthz/
+
+    # The release phase, and the reason it is here rather than in the image:
+    # it runs once per deploy, before the new instance serves traffic, so a
+    # failed migration leaves the old one running. The client is NOT built here
+    # — this runs in a throwaway container whose filesystem never reaches the
+    # web process, which is why the bundle is baked into the image instead.
+    preDeployCommand: python manage.py check --deploy --fail-level ERROR && python manage.py migrate --noinput && python manage.py seed_roles
+
+    envVars:
+      # 50+ random characters, generated once and then held by Render. Rotating
+      # it signs everybody out, which is the intended effect of rotating it.
+      - key: SECRET_KEY
+        generateValue: true
+
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hmis-db
+          property: connectionString
+
+      # The service's own hostname, so the first deploy has a valid
+      # ALLOWED_HOSTS without anybody typing one. prod.py takes no wildcard.
+      # Add the clinic's domain here too, comma-separated, once there is one.
+      - key: ALLOWED_HOSTS
+        fromService:
+          type: web
+          name: hmis
+          property: host
+
+      # Set by hand: this one needs the https:// scheme, which the blueprint
+      # cannot compose from the hostname above. e.g. https://hmis.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+
+      - key: WEB_CONCURRENCY
+        value: "3"
+
+      # DJANGO_SETTINGS_MODULE is deliberately absent: the image sets it to
+      # config.settings.prod, so it cannot be forgotten or overridden by a
+      # half-filled dashboard.
+
+databases:
+  - name: hmis-db
+    databaseName: hmis
+    user: hmis
+    region: frankfurt
+    postgresMajorVersion: "16"
+    # The free database is deleted after 30 days. This holds patient records.
+    plan: basic-256mb

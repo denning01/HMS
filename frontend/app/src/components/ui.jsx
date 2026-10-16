@@ -1,6 +1,7 @@
 // The small vocabulary every screen is built from. Kept in one file because it
 // is small; the moment any one of these needs its own tests it moves out.
 
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const cx = (...parts) => parts.filter(Boolean).join(' ')
@@ -88,6 +89,62 @@ export function Button({ variant = 'primary', className, as, to, ...props }) {
 
   if (as === 'link') return <Link to={to} className={classes} {...props} />
   return <button type="button" className={classes} {...props} />
+}
+
+/**
+ * A button and the panel it opens. Closes on Escape, on a click outside, and on
+ * any click within the panel — every panel we open is a list of things to pick,
+ * so picking one should put it away.
+ */
+export function Menu({ label, children, align = 'left', className, buttonClassName }) {
+  const [open, setOpen] = useState(false)
+  const root = useRef(null)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const close = (event) => {
+      if (!root.current?.contains(event.target)) setOpen(false)
+    }
+    const onKey = (event) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', close)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div ref={root} className={cx('relative', className)}>
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((was) => !was)}
+        className={buttonClassName}
+      >
+        {typeof label === 'function' ? label(open) : label}
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          onClick={() => setOpen(false)}
+          className={cx(
+            'absolute top-full z-30 mt-1.5 min-w-56 rounded-xl border border-line bg-surface p-1.5',
+            'shadow-lg shadow-ink/10',
+            align === 'right' ? 'right-0' : 'left-0',
+          )}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function Field({ label, error, hint, children, className }) {

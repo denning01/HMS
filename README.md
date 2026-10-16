@@ -28,7 +28,7 @@ frontend/app/     React client
 manage.py         Stays at the repo root; puts backend/ on the path
 ```
 
-`manage.py`, `pytest.ini` (`pythonpath = backend`) and the `Procfile`
+`manage.py`, `pytest.ini` (`pythonpath = backend`) and the `Dockerfile`
 (`gunicorn --chdir backend`) each put `backend/` on the import path, so
 `config.*` and `apps.*` import unchanged.
 
@@ -59,7 +59,7 @@ on any request sends the client back to the sign-in screen, wherever it was.
 
 - **Backend** — Django 6.1 + Django REST Framework, PostgreSQL 16
 - **Client** — React 19 + Vite, React Router, TanStack Query, Tailwind CSS 4
-- Gunicorn + WhiteNoise for deployment
+- Gunicorn + WhiteNoise, deployed as a Docker image
 
 ## Local setup
 
@@ -246,7 +246,6 @@ onwards asks `line.is_cleared` rather than reading payment state directly.
 Every module in the specification is built. What is deliberately not built is
 listed at the end of `docs/RUNBOOK.md` — no refunds, no insurance, no SMS, no
 cost recorded against consultation or laboratory revenue, one site.
-| 9–10 | Reporting, UAT, go-live | Not started |
 
 ## Going live
 
@@ -255,10 +254,21 @@ phase does, what to check after it, backups and restores, how to roll back a
 release that migrated, and what to do when a department says a paid order has
 not reached them.
 
+The deployment is a Docker image. `Dockerfile` builds the client and runs
+`collectstatic` **at build time**, and both have to be there rather than in the
+release phase: the release command runs in a throwaway container whose
+filesystem the web process never sees, so a bundle built there is discarded and
+`CompressedManifestStaticFilesStorage` has no manifest to resolve `{% static %}`
+against. `render.yaml` is the Render blueprint — web service, PostgreSQL 16,
+health check and release phase; Railway builds the same Dockerfile.
+
 The release phase runs Django's deployment checks first, so a missing
 `SECRET_KEY` or a wildcard `ALLOWED_HOSTS` stops the deploy rather than serving
-it. `wsgi.py` defaults to the production settings, so a deployment that forgets
-`DJANGO_SETTINGS_MODULE` fails closed instead of serving with `DEBUG=True`.
+it. The image sets `DJANGO_SETTINGS_MODULE=config.settings.prod`, because
+`wsgi.py` defaults to production but `manage.py` defaults to *development* — so
+release commands and one-off shells would otherwise run against dev settings,
+where `check --deploy` inspects the wrong configuration and the `DEBUG` guard on
+the demo seeders never fires.
 
 Sessions follow a shift rather than a browser: refreshed on every request and
 dead eight hours after the last one, so a shared screen left on overnight is

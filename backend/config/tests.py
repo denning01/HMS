@@ -45,6 +45,27 @@ def test_the_api_is_not_swallowed_by_the_catch_all(client, db):
     assert b'<div id="root">' not in response.content
 
 
+def test_an_unknown_api_path_answers_in_json(client, db):
+    """404 is not enough: the client parses every body as JSON.
+
+    An HTML error page reaching the fetch wrapper raises a parse error instead
+    of the status the server gave, so the screen reports nothing useful.
+    """
+    response = client.get("/api/does-not-exist/")
+
+    assert response["Content-Type"].startswith("application/json")
+    assert response.json() == {"detail": "Not found."}
+
+
+def test_an_unknown_client_route_still_serves_the_app(client, db):
+    """The JSON handler is for /api/ alone — everywhere else React Router owns
+    the URL, so a deep link is the app, not a 404 page."""
+    response = client.get("/billing/invoices/3")
+
+    assert response.status_code == 200
+    assert b'<div id="root">' in response.content
+
+
 # --- the deployment itself --------------------------------------------------
 
 

@@ -16,3 +16,8 @@ urlpatterns = [
     # JSON and fail on parsing rather than on the status it was given.
     re_path(r"^(?!api/|static/).*$", views.spa, name="spa"),
 ]
+
+# Django's default error pages are HTML; under /api/ they have to be JSON. See
+# the note in views.py.
+handler404 = "config.views.api_aware_404"
+handler500 = "config.views.api_aware_500"
