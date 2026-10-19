@@ -1,5 +1,5 @@
 
-name: HMIS CI
+name: HMIS CI and Image Publish
 
 on:
   push:
@@ -9,10 +9,11 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   test-and-build:
-    name: Test and build HMIS
+    name: Test, build, and publish HMIS
     runs-on: ubuntu-latest
 
     services:
@@ -50,7 +51,6 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements/dev.txt
 
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -72,7 +72,24 @@ jobs:
       - name: Run Django system check
         run: python manage.py check
 
-
-
       - name: Build Docker image
         run: docker build -t hmis:${{ github.sha }} .
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" |
+            docker login ghcr.io \
+              -u "${{ github.actor }}" \
+              --password-stdin
+
+      - name: Publish Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          IMAGE_ID="ghcr.io/${GITHUB_REPOSITORY,,}"
+
+          docker tag "hmis:${GITHUB_SHA}" "${IMAGE_ID}:${GITHUB_SHA}"
+          docker tag "hmis:${GITHUB_SHA}" "${IMAGE_ID}:latest"
+
+          docker push "${IMAGE_ID}:${GITHUB_SHA}"
+          docker push "${IMAGE_ID}:latest"
