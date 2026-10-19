@@ -50,11 +50,6 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements/dev.txt
 
-      - name: Run Django tests
-        run: pytest --create-db
-
-      - name: Run Django system check
-        run: python manage.py check
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -70,6 +65,14 @@ jobs:
       - name: Build React frontend
         working-directory: frontend/app
         run: npm run build
+
+      - name: Run Django tests
+        run: pytest --create-db
+
+      - name: Run Django system check
+        run: python manage.py check
+
+
 
       - name: Build Docker image
         run: docker build -t hmis:${{ github.sha }} .
